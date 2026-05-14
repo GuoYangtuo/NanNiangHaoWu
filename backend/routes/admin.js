@@ -3,10 +3,10 @@
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
-const Category = require('../models/Category');
 const User = require('../models/User');
 const { authMiddleware } = require('../middlewares/auth');
 const { adminMiddleware } = require('../middlewares/admin');
+const { getCategoryById } = require('../data/categories');
 const { success, badRequest, notFound, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
 
@@ -30,11 +30,6 @@ router.get('/products', async (req, res) => {
       where: whereClause,
       include: [
         {
-          model: Category,
-          as: 'category',
-          attributes: ['id', 'name']
-        },
-        {
           model: User,
           as: 'user',
           attributes: ['id', 'username', 'email']
@@ -45,17 +40,20 @@ router.get('/products', async (req, res) => {
       offset
     });
 
-    const processedProducts = products.map(p => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      purchase_link: p.purchase_link,
-      images: (p.images || []).map(img => `/uploads/${img}`),
-      status: p.status,
-      category: p.category,
-      user: p.user,
-      created_at: p.created_at
-    }));
+    const processedProducts = products.map(p => {
+      const cat = getCategoryById(p.category_id);
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        purchase_link: p.purchase_link,
+        images: (p.images || []).map(img => `/uploads/${img}`),
+        status: p.status,
+        category: cat ? { id: cat.id, name: cat.name } : null,
+        user: p.user,
+        created_at: p.created_at
+      };
+    });
 
     return success(res, {
       products: processedProducts,

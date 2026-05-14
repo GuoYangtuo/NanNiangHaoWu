@@ -88,7 +88,9 @@ backend/
 ├── .env                    # 环境变量（不提交 git）
 ├── config/
 │   └── config.json         # Sequelize 数据库配置
-├── migrations/             # 数据库迁移文件
+├── data/
+│   ├── categories.json     # 分类树配置（唯一数据源）
+│   └── categories.js       # 分类加载模块
 ├── models/                 # Sequelize 模型
 │   ├── User.js
 │   ├── Product.js
@@ -124,20 +126,14 @@ backend/
 | updated_at | DATETIME | 更新时间 |
 
 #### categories 表
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | INT AUTO_INCREMENT | 主键 |
-| name | VARCHAR(100) | 分类名称 |
-| slug | VARCHAR(100) | URL slug |
-| parent_id | INT | 父级分类 ID（顶层为 NULL） |
-| sort_order | INT | 排序序号 |
-| created_at | DATETIME | 创建时间 |
+（已废弃，分类数据统一存储在 `backend/data/categories.json` 中）
 
 #### products 表
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | INT AUTO_INCREMENT | 主键 |
-| category_id | INT | 所属分类 ID |
+| category_id | VARCHAR(100) | 所属分类 slug（如 `lolita`） |
+| user_id | INT | 推荐人用户 ID |
 | user_id | INT | 推荐人用户 ID |
 | name | VARCHAR(200) | 商品名称 |
 | description | TEXT | 简介/使用感受 |
@@ -178,7 +174,8 @@ frontend/
 │   │   ├── Upload.jsx
 │   │   └── Admin.jsx
 │   ├── hooks/
-│   │   └── useAuth.js
+│   │   ├── useAuth.js
+│   │   └── useCategories.js  # 分类数据 hook
 │   ├── context/
 │   │   └── AuthContext.jsx
 │   └── utils/
@@ -188,7 +185,7 @@ frontend/
 
 ---
 
-## 6. 分类树结构（JSON，存于前端常量）
+## 6. 分类树结构（backend/data/categories.json）
 
 ```
 - 📂 小裙子
@@ -219,7 +216,9 @@ frontend/
   └── 润滑液 / 辅助用品
 ```
 
-> 注意：前端分类树 **不存储在数据库中**，仅用于展示与组织商品类目。数据库 `categories` 表存储的分类名称与前端 JSON 中的类目名称一一对应。
+> 注意：分类树 **存储于 `backend/data/categories.json`**，作为唯一数据源。
+> 后端 `GET /api/categories` 和前端 `useCategories` hook 均从该文件读取数据，无需数据库支持。
+> 修改分类只需编辑该 JSON 文件即可。
 
 ---
 
@@ -246,7 +245,7 @@ frontend/
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
 | GET | /api/categories | 获取所有分类列表（树形结构） | 公开 |
-| POST | /api/categories | 创建新分类 | 管理员 |
+| POST | /api/categories | 创建新分类（已禁用，请直接编辑 JSON 文件） | 管理员 |
 
 ### 管理模块 `/api/admin`
 | 方法 | 路径 | 说明 | 权限 |
@@ -288,7 +287,7 @@ frontend/
 - 返回主页按钮
 
 ### 8.4 上传好物页
-- 选择分类（下拉选择，支持选择现有分类或创建新分类）
+- 选择分类（下拉选择，从 `backend/data/categories.json` 获取）
 - 创建新分类时：输入新分类名称
 - 商品名称输入框
 - 简介/推荐理由文本域（多行）

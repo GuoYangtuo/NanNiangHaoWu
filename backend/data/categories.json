@@ -1,0 +1,64 @@
+[
+  {
+    "id": "folder-dress",
+    "name": "小裙子",
+    "type": "folder",
+    "children": [
+      { "id": "lolita", "name": "Lolita 小裙子", "type": "leaf" },
+      { "id": "jk", "name": "JK 制服", "type": "leaf" },
+      { "id": "soft-girl", "name": "软妹服 / 日常可爱风", "type": "leaf" },
+      { "id": "hanfu", "name": "漢服 / 漢元素", "type": "leaf" }
+    ]
+  },
+  {
+    "id": "folder-cosmetics",
+    "name": "化妆品",
+    "type": "folder",
+    "children": [
+      { "id": "foundation", "name": "底妆", "type": "leaf" },
+      { "id": "eye-makeup", "name": "眼妆", "type": "leaf" },
+      { "id": "lip-makeup", "name": "唇妆", "type": "leaf" },
+      { "id": "nail", "name": "指甲油 / 美甲", "type": "leaf" }
+    ]
+  },
+  {
+    "id": "folder-bodycare",
+    "name": "洗护用品",
+    "type": "folder",
+    "children": [
+      { "id": "body-care", "name": "沐浴露 / 身体乳", "type": "leaf" },
+      { "id": "hair-care", "name": "洗发护发", "type": "leaf" },
+      { "id": "oral-care", "name": "口腔护理", "type": "leaf" }
+    ]
+  },
+  {
+    "id": "folder-plussize",
+    "name": "大码女装",
+    "type": "folder",
+    "children": [
+      { "id": "plus-dress", "name": "连衣裙", "type": "leaf" },
+      { "id": "plus-top", "name": "上装", "type": "leaf" },
+      { "id": "plus-bottom", "name": "下装", "type": "leaf" }
+    ]
+  },
+  {
+    "id": "folder-accessories",
+    "name": "饰品",
+    "type": "folder",
+    "children": [
+      { "id": "hair-accessories", "name": "发饰", "type": "leaf" },
+      { "id": "earrings", "name": "耳饰", "type": "leaf" },
+      { "id": "necklace-bracelet", "name": "项链 / 手链", "type": "leaf" }
+    ]
+  },
+  {
+    "id": "folder-adult",
+    "name": "情趣玩具",
+    "type": "folder",
+    "children": [
+      { "id": "vibrators", "name": "按摩棒 / 跳蛋", "type": "leaf" },
+      { "id": "lingerie", "name": "情趣内衣", "type": "leaf" },
+      { "id": "lubes", "name": "润滑液 / 辅助用品", "type": "leaf" }
+    ]
+  }
+]

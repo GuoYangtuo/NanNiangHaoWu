@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { CATEGORY_TREE } from '../utils/constants';
+import { useCategories } from '../hooks/useCategories';
 
 const CategoryTree = ({ selectedId, onSelect }) => {
+  const { categories, loading, error } = useCategories();
   const [expandedFolders, setExpandedFolders] = useState({});
 
   const toggleFolder = (folderId) => {
-    setExpandedFolders(prev => ({
+    setExpandedFolders((prev) => ({
       ...prev,
       [folderId]: !prev[folderId]
     }));
@@ -18,6 +19,18 @@ const CategoryTree = ({ selectedId, onSelect }) => {
       onSelect(item.id);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="px-3 py-4 text-center text-sm text-text2">加载中...</div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-3 py-4 text-center text-sm text-red-500">加载失败</div>
+    );
+  }
 
   return (
     <nav className="w-full">
@@ -35,9 +48,8 @@ const CategoryTree = ({ selectedId, onSelect }) => {
       </div>
 
       <div className="space-y-1 px-3 py-2">
-        {CATEGORY_TREE.map((folder) => (
+        {categories.map((folder) => (
           <div key={folder.id}>
-            {/* 文件夹节点 */}
             <button
               onClick={() => handleSelect(folder)}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -61,8 +73,7 @@ const CategoryTree = ({ selectedId, onSelect }) => {
               </div>
             </button>
 
-            {/* 子类目列表 */}
-            {expandedFolders[folder.id] && (
+            {expandedFolders[folder.id] && folder.children && (
               <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary-light/50 pl-3">
                 {folder.children.map((child) => (
                   <button

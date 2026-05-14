@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import CategoryTree from '../components/CategoryTree';
 import Waterfall from '../components/Waterfall';
+import { useCategories } from '../hooks/useCategories';
 import { getProducts } from '../api/product';
-import { CATEGORY_TREE } from '../utils/constants';
 
 const Home = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -11,6 +11,7 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
+  const { categories } = useCategories();
 
   const fetchProducts = useCallback(async (categoryId, pageNum, append = false) => {
     setLoading(true);
@@ -57,6 +58,21 @@ const Home = () => {
     setSelectedCategory(categoryId);
   };
 
+  const findCategoryName = (items, id) => {
+    for (const item of items) {
+      if (item.id === id) return item.name;
+      if (item.children) {
+        const found = findCategoryName(item.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const selectedName = selectedCategory
+    ? findCategoryName(categories, selectedCategory)
+    : null;
+
   return (
     <div className="flex min-h-[calc(100vh-64px)]">
       {/* 左侧分类栏 */}
@@ -79,59 +95,22 @@ const Home = () => {
             className="w-full px-4 py-2.5 bg-white border border-warm-border rounded-lg text-sm"
           >
             <option value="">全部好物</option>
-            <optgroup label="小裙子">
-              <option value="lolita">Lolita 小裙子</option>
-              <option value="jk">JK 制服</option>
-              <option value="soft-girl">软妹服 / 日常可爱风</option>
-              <option value="hanfu">漢服 / 漢元素</option>
-            </optgroup>
-            <optgroup label="化妆品">
-              <option value="foundation">底妆</option>
-              <option value="eye-makeup">眼妆</option>
-              <option value="lip-makeup">唇妆</option>
-              <option value="nail">指甲油 / 美甲</option>
-            </optgroup>
-            <optgroup label="洗护用品">
-              <option value="body-care">沐浴露 / 身体乳</option>
-              <option value="hair-care">洗发护发</option>
-              <option value="oral-care">口腔护理</option>
-            </optgroup>
-            <optgroup label="大码女装">
-              <option value="plus-dress">连衣裙</option>
-              <option value="plus-top">上装</option>
-              <option value="plus-bottom">下装</option>
-            </optgroup>
-            <optgroup label="饰品">
-              <option value="hair-accessories">发饰</option>
-              <option value="earrings">耳饰</option>
-              <option value="necklace-bracelet">项链 / 手链</option>
-            </optgroup>
-            <optgroup label="情趣玩具">
-              <option value="vibrators">按摩棒 / 跳蛋</option>
-              <option value="lingerie">情趣内衣</option>
-              <option value="lubes">润滑液 / 辅助用品</option>
-            </optgroup>
+            {categories.map((folder) => (
+              <optgroup key={folder.id} label={folder.name}>
+                {folder.children?.map((child) => (
+                  <option key={child.id} value={child.id}>
+                    {child.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
 
         {/* 页面标题 */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-text1">
-            {selectedCategory
-              ? (() => {
-                  const findCategory = (items) => {
-                    for (const item of items) {
-                      if (item.id === selectedCategory) return item.name;
-                      if (item.children) {
-                        const found = findCategory(item.children);
-                        if (found) return found;
-                      }
-                    }
-                    return null;
-                  };
-                  return findCategory(CATEGORY_TREE) || '商品列表';
-                })()
-              : '好物推荐'}
+            {selectedName || '好物推荐'}
           </h1>
           <p className="text-text2 mt-1 text-sm">
             发现值得推荐的好物，一起抄作业吧~

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
+import { useCategories } from '../hooks/useCategories';
 import { createProduct } from '../api/product';
-import { CATEGORY_TREE } from '../utils/constants';
 
 const Upload = () => {
   const navigate = useNavigate();
+  const { categories, loading: categoriesLoading } = useCategories();
   const [form, setForm] = useState({
     category_id: '',
     name: '',
@@ -16,20 +17,6 @@ const Upload = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
-
-  // 扁平化分类列表用于选择
-  const flatCategories = [];
-  CATEGORY_TREE.forEach((folder) => {
-    if (folder.children) {
-      folder.children.forEach((child) => {
-        flatCategories.push({
-          id: child.id,
-          name: child.name,
-          groupName: folder.name
-        });
-      });
-    }
-  });
 
   const validate = () => {
     const errors = {};
@@ -69,7 +56,6 @@ const Upload = () => {
 
     setLoading(true);
     try {
-      // 构建 FormData
       const formData = new FormData();
       formData.append('category_id', form.category_id);
       formData.append('name', form.name.trim());
@@ -78,7 +64,6 @@ const Upload = () => {
         formData.append('purchase_link', form.purchase_link.trim());
       }
 
-      // 只上传新图片
       const newImages = images.filter((img) => img.isNew);
       newImages.forEach((img) => {
         formData.append('images', img.file);
@@ -86,7 +71,6 @@ const Upload = () => {
 
       await createProduct(formData);
 
-      // 显示成功提示并跳转
       alert('提交成功！你的好物推荐正在等待审核，通过后就会出现在首页啦~');
       navigate('/');
     } catch (err) {
@@ -104,15 +88,21 @@ const Upload = () => {
     }
   };
 
+  if (categoriesLoading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 text-center text-text2">
+        加载分类中...
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      {/* 页面标题 */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text1">上传好物</h1>
         <p className="text-text2 mt-1">分享你使用过的好物，让更多姐妹抄作业~</p>
       </div>
 
-      {/* 表单 */}
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-card p-6 md:p-8">
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
@@ -121,7 +111,6 @@ const Upload = () => {
         )}
 
         <div className="space-y-6">
-          {/* 分类选择 */}
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
               分类 <span className="text-red-500">*</span>
@@ -135,7 +124,7 @@ const Upload = () => {
               }`}
             >
               <option value="">请选择分类</option>
-              {CATEGORY_TREE.map((folder) => (
+              {categories.map((folder) => (
                 <optgroup key={folder.id} label={folder.name}>
                   {folder.children?.map((child) => (
                     <option key={child.id} value={child.id}>
@@ -150,7 +139,6 @@ const Upload = () => {
             )}
           </div>
 
-          {/* 商品名称 */}
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
               商品名称 <span className="text-red-500">*</span>
@@ -172,7 +160,6 @@ const Upload = () => {
             <p className="mt-1 text-xs text-text2/60 text-right">{form.name.length}/200</p>
           </div>
 
-          {/* 简介/推荐理由 */}
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
               使用感受 / 推荐理由 <span className="text-red-500">*</span>
@@ -192,7 +179,6 @@ const Upload = () => {
             )}
           </div>
 
-          {/* 参考购买链接 */}
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
               参考购买链接
@@ -213,7 +199,6 @@ const Upload = () => {
             <p className="mt-1 text-xs text-text2/60">选填，可帮助姐妹们找到同款</p>
           </div>
 
-          {/* 图片上传 */}
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
               图片 <span className="text-red-500">*</span>
@@ -224,7 +209,6 @@ const Upload = () => {
             )}
           </div>
 
-          {/* 提交按钮 */}
           <div className="pt-4">
             <button
               type="submit"

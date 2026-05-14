@@ -3,11 +3,11 @@
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
-const Category = require('../models/Category');
 const User = require('../models/User');
 const { authMiddleware, optionalAuth } = require('../middlewares/auth');
+const { isValidCategory, getCategoryById, CATEGORY_TREE } = require('../data/categories');
 const upload = require('../middlewares/upload');
-const { success, badRequest, notFound, serverError } = require('../utils/response');
+const { success, badRequest, notFound, serverError, forbidden } = require('../utils/response');
 const logger = require('../utils/logger');
 
 const router = express.Router();
@@ -15,8 +15,15 @@ const router = express.Router();
 // 上传商品验证规则
 const createProductRules = [
   body('category_id')
+    .trim()
     .notEmpty()
-    .withMessage('请选择有效的分类'),
+    .withMessage('请选择有效的分类')
+    .custom((value) => {
+      if (!isValidCategory(value)) {
+        throw new Error('选择的分类不存在');
+      }
+      return true;
+    }),
   body('name')
     .trim()
     .isLength({ min: 1, max: 200 })
@@ -38,18 +45,13 @@ router.get('/', optionalAuth, async (req, res) => {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const whereClause = { status: 'approved' };
-    if (category_id) {
-      whereClause.category_id = parseInt(category_id);
+    if (category_id && isValidCategory(category_id)) {
+      whereClause.category_id = category_id;
     }
 
     const { count, rows: products } = await Product.findAndCountAll({
       where: whereClause,
       include: [
-        {
-          model: Category,
-          as: 'category',
-          attributes: ['id', 'name', 'slug']
-        },
         {
           model: User,
           as: 'user',
@@ -61,17 +63,19 @@ router.get('/', optionalAuth, async (req, res) => {
       offset
     });
 
-    // 处理图片路径
-    const processedProducts = products.map(p => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      purchase_link: p.purchase_link,
-      images: (p.images || []).map(img => `/uploads/${img}`),
-      category: p.category,
-      user: p.user,
-      created_at: p.created_at
-    }));
+    const processedProducts = products.map((p) => {
+      const cat = getCategoryById(p.category_id);
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        purchase_link: p.purchase_link,
+        images: (p.images || []).map((img) => `/uploads/${img}`),
+        category: cat ? { id: cat.id, name: cat.name, parentName: cat.parentName } : null,
+        user: p.user,
+        created_at: p.created_at
+      };
+    });
 
     return success(res, {
       products: processedProducts,
@@ -98,11 +102,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
       },
       include: [
         {
-          model: Category,
-          as: 'category',
-          attributes: ['id', 'name', 'slug']
-        },
-        {
           model: User,
           as: 'user',
           attributes: ['id', 'username']
@@ -114,13 +113,15 @@ router.get('/:id', optionalAuth, async (req, res) => {
       return notFound(res, '商品不存在或尚未审核通过');
     }
 
+    const cat = getCategoryById(product.category_id);
+
     return success(res, {
       id: product.id,
       name: product.name,
       description: product.description,
       purchase_link: product.purchase_link,
-      images: (product.images || []).map(img => `/uploads/${img}`),
-      category: product.category,
+      images: (product.images || []).map((img) => `/uploads/${img}`),
+      category: cat ? { id: cat.id, name: cat.name, parentName: cat.parentName } : null,
       user: product.user,
       created_at: product.created_at
     });
@@ -135,12 +136,10 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // 清理已上传的文件
       if (req.files && req.files.length > 0) {
-        req.files.forEach(file => {
+        req.files.forEach((file) => {
           const fs = require('fs');
-          const path = require('path');
-          const filepath = path.join(__dirname, '..', 'uploads', file.filename);
+          const filepath = require('path').join(__dirname, '..', 'uploads', file.filename);
           if (fs.existsSync(filepath)) {
             fs.unlinkSync(filepath);
           }
@@ -151,18 +150,10 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
 
     const { category_id, name, description, purchase_link } = req.body;
 
-    // 验证分类是否存在
-    const category = await Category.findByPk(category_id);
-    if (!category) {
-      return badRequest(res, '选择的分类不存在');
-    }
+    const images = (req.files || []).map((file) => file.filename);
 
-    // 处理上传的图片
-    const images = (req.files || []).map(file => file.filename);
-
-    // 创建商品
     const product = await Product.create({
-      category_id: parseInt(category_id),
+      category_id,
       user_id: req.user.id,
       name: name.trim(),
       description: description ? description.trim() : null,
@@ -189,11 +180,12 @@ router.put('/:id', authMiddleware, upload.array('images', 9), createProductRules
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       if (req.files && req.files.length > 0) {
-        const fs = require('fs');
-        const path = require('path');
-        req.files.forEach(file => {
-          const filepath = path.join(__dirname, '..', 'uploads', file.filename);
-          if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        req.files.forEach((file) => {
+          const fs = require('fs');
+          const filepath = require('path').join(__dirname, '..', 'uploads', file.filename);
+          if (fs.existsSync(filepath)) {
+            fs.unlinkSync(filepath);
+          }
         });
       }
       return badRequest(res, errors.array()[0].msg);
@@ -205,7 +197,6 @@ router.put('/:id', authMiddleware, upload.array('images', 9), createProductRules
       return notFound(res, '商品不存在');
     }
 
-    // 只能修改自己的商品，且只能修改待审核状态的商品
     if (product.user_id !== req.user.id) {
       return forbidden(res, '只能修改自己的推荐');
     }
@@ -216,17 +207,10 @@ router.put('/:id', authMiddleware, upload.array('images', 9), createProductRules
 
     const { category_id, name, description, purchase_link } = req.body;
 
-    // 验证分类
-    const category = await Category.findByPk(category_id);
-    if (!category) {
-      return badRequest(res, '选择的分类不存在');
-    }
-
-    // 处理新上传的图片
-    const newImages = (req.files || []).map(file => file.filename);
+    const newImages = (req.files || []).map((file) => file.filename);
 
     await product.update({
-      category_id: parseInt(category_id),
+      category_id,
       name: name.trim(),
       description: description ? description.trim() : null,
       purchase_link: purchase_link ? purchase_link.trim() : null,
@@ -249,16 +233,14 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return notFound(res, '商品不存在');
     }
 
-    // 只能删除自己的商品
     if (product.user_id !== req.user.id) {
       return forbidden(res, '只能删除自己的推荐');
     }
 
-    // 删除关联的图片文件
     if (product.images && product.images.length > 0) {
       const fs = require('fs');
       const path = require('path');
-      product.images.forEach(img => {
+      product.images.forEach((img) => {
         const filepath = path.join(__dirname, '..', 'uploads', img);
         if (fs.existsSync(filepath)) {
           fs.unlinkSync(filepath);
@@ -272,7 +254,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 
     return success(res, null, '删除成功');
   } catch (err) {
-    logger.error('Products', '删除商品失败', { error: err.message });
+    logger.error('Products', '更新商品失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });

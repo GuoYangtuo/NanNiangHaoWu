@@ -10,7 +10,6 @@ const fs = require('fs');
 
 const sequelize = require('./models/index');
 const User = require('./models/User');
-const Category = require('./models/Category');
 const Product = require('./models/Product');
 const logger = require('./utils/logger');
 
@@ -83,10 +82,6 @@ app.use((err, req, res, next) => {
 
 // 设置模型关联
 const setupAssociations = () => {
-  Category.hasMany(Category, { as: 'children', foreignKey: 'parent_id', sourceKey: 'id' });
-  Category.belongsTo(Category, { as: 'parent', foreignKey: 'parent_id', targetKey: 'id' });
-
-  Product.belongsTo(Category, { as: 'category', foreignKey: 'category_id' });
   Product.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
 };
 
@@ -122,38 +117,6 @@ const initializeDatabase = async () => {
       logger.info('Admin', '管理员账号已存在');
     }
 
-    // 初始化分类数据（如果为空）
-    const categoryCount = await Category.count();
-    if (categoryCount === 0) {
-      await Category.bulkCreate([
-        { name: '小裙子', slug: 'dresses', parent_id: null, sort_order: 1 },
-        { name: '化妆品', slug: 'cosmetics', parent_id: null, sort_order: 2 },
-        { name: '洗护用品', slug: 'personal-care', parent_id: null, sort_order: 3 },
-        { name: '大码女装', slug: 'plus-size', parent_id: null, sort_order: 4 },
-        { name: '饰品', slug: 'accessories', parent_id: null, sort_order: 5 },
-        { name: '情趣玩具', slug: 'adult-toys', parent_id: null, sort_order: 6 }
-      ]);
-
-      const parents = await Category.findAll({ where: { parent_id: null } });
-      const categoryMappings = {
-        '小裙子': 'lolita',
-        '化妆品': 'cosmetics-personal',
-        '洗护用品': 'body-hair',
-        '大码女装': 'plus-clothing',
-        '饰品': 'jewelry',
-        '情趣玩具': 'adult'
-      };
-
-      for (const parent of parents) {
-        await Category.bulkCreate([
-          { name: 'Lolita 小裙子', slug: `${categoryMappings[parent.name]}-lolita`, parent_id: parent.id, sort_order: 1 },
-          { name: 'JK 制服', slug: `${categoryMappings[parent.name]}-jk`, parent_id: parent.id, sort_order: 2 },
-          { name: '软妹服 / 日常可爱风', slug: `${categoryMappings[parent.name]}-soft`, parent_id: parent.id, sort_order: 3 },
-          { name: '漢服 / 漢元素', slug: `${categoryMappings[parent.name]}-han`, parent_id: parent.id, sort_order: 4 }
-        ]);
-      }
-      logger.info('Database', '分类数据初始化完成');
-    }
 
     return true;
   } catch (err) {

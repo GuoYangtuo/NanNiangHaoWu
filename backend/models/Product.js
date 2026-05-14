@@ -9,12 +9,8 @@ const Product = sequelize.define('Product', {
     autoIncrement: true
   },
   category_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'categories',
-      key: 'id'
-    }
+    type: DataTypes.STRING(100),
+    allowNull: false
   },
   user_id: {
     type: DataTypes.INTEGER,
