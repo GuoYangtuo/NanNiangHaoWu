@@ -8,26 +8,30 @@ const data = require('./categories.json');
 const CATEGORY_TREE = data;
 
 const leafCategories = [];
-CATEGORY_TREE.forEach((folder) => {
-  if (folder.children) {
-    folder.children.forEach((child) => {
-      leafCategories.push(child.id);
-    });
+const collectLeaves = (nodes) => {
+  for (const node of nodes) {
+    if (node.children) {
+      collectLeaves(node.children);
+    } else {
+      leafCategories.push(node.id);
+    }
   }
-});
+};
+collectLeaves(CATEGORY_TREE);
 
 const isValidCategory = (id) => leafCategories.includes(id);
 
-const getCategoryById = (id) => {
-  for (const folder of CATEGORY_TREE) {
-    if (folder.children) {
-      const child = folder.children.find((c) => c.id === id);
-      if (child) {
-        return {
-          ...child,
-          parentName: folder.name
-        };
-      }
+const getCategoryById = (id, nodes = CATEGORY_TREE, ancestors = []) => {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return {
+        ...node,
+        breadcrumbs: ancestors.map((a) => a.name)
+      };
+    }
+    if (node.children) {
+      const found = getCategoryById(id, node.children, [...ancestors, node]);
+      if (found) return found;
     }
   }
   return null;

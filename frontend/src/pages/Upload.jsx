@@ -4,6 +4,19 @@ import ImageUpload from '../components/ImageUpload';
 import { useCategories } from '../hooks/useCategories';
 import { createProduct } from '../api/product';
 
+const flattenCategories = (nodes, ancestors = []) => {
+  const result = [];
+  for (const node of nodes) {
+    const path = [...ancestors, node.name];
+    if (node.type === 'leaf') {
+      result.push({ id: node.id, label: path.join(' / ') });
+    } else if (node.children) {
+      result.push(...flattenCategories(node.children, path));
+    }
+  }
+  return result;
+};
+
 const Upload = () => {
   const navigate = useNavigate();
   const { categories, loading: categoriesLoading } = useCategories();
@@ -17,6 +30,8 @@ const Upload = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+
+  const flatCategories = categories.length > 0 ? flattenCategories(categories) : [];
 
   const validate = () => {
     const errors = {};
@@ -124,14 +139,10 @@ const Upload = () => {
               }`}
             >
               <option value="">请选择分类</option>
-              {categories.map((folder) => (
-                <optgroup key={folder.id} label={folder.name}>
-                  {folder.children?.map((child) => (
-                    <option key={child.id} value={child.id}>
-                      {child.name}
-                    </option>
-                  ))}
-                </optgroup>
+              {flatCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.label}
+                </option>
               ))}
             </select>
             {fieldErrors.category_id && (

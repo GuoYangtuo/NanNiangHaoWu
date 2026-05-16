@@ -71,7 +71,7 @@ router.get('/', optionalAuth, async (req, res) => {
         description: p.description,
         purchase_link: p.purchase_link,
         images: (p.images || []).map((img) => `/uploads/${img}`),
-        category: cat ? { id: cat.id, name: cat.name, parentName: cat.parentName } : null,
+        category: cat ? { id: cat.id, name: cat.name, breadcrumbs: cat.breadcrumbs } : null,
         user: p.user,
         created_at: p.created_at
       };

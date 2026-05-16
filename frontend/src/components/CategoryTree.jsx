@@ -1,6 +1,67 @@
 import { useState } from 'react';
 import { useCategories } from '../hooks/useCategories';
 
+const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle }) => {
+  const isFolder = node.type === 'folder';
+  const isExpanded = !!expandedFolders[node.id];
+  const isSelected = selectedId === node.id;
+
+  const handleClick = () => {
+    if (isFolder) {
+      onToggle(node.id);
+    } else {
+      onSelect(node.id);
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={handleClick}
+        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+          isSelected
+            ? 'bg-primary text-white shadow-sm font-medium'
+            : isFolder
+            ? 'text-text2 hover:bg-primary-light/40 font-medium'
+            : 'text-text2 hover:bg-primary-light/40'
+        }`}
+        style={{ paddingLeft: `${12 + depth * 16}px` }}
+      >
+        {isFolder && (
+          <svg
+            className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${
+              isExpanded ? 'rotate-90' : ''
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+        {!isFolder && <span className="w-4 flex-shrink-0" />}
+        <span>{node.name}</span>
+      </button>
+
+      {isFolder && isExpanded && node.children && (
+        <div>
+          {node.children.map((child) => (
+            <CategoryNode
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              expandedFolders={expandedFolders}
+              onToggle={onToggle}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CategoryTree = ({ selectedId, onSelect }) => {
   const { categories, loading, error } = useCategories();
   const [expandedFolders, setExpandedFolders] = useState({});
@@ -10,14 +71,6 @@ const CategoryTree = ({ selectedId, onSelect }) => {
       ...prev,
       [folderId]: !prev[folderId]
     }));
-  };
-
-  const handleSelect = (item) => {
-    if (item.type === 'folder') {
-      toggleFolder(item.id);
-    } else {
-      onSelect(item.id);
-    }
   };
 
   if (loading) {
@@ -48,49 +101,16 @@ const CategoryTree = ({ selectedId, onSelect }) => {
       </div>
 
       <div className="space-y-1 px-3 py-2">
-        {categories.map((folder) => (
-          <div key={folder.id}>
-            <button
-              onClick={() => handleSelect(folder)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                selectedId === folder.id
-                  ? 'bg-primary-light text-primary-dark'
-                  : 'text-text2 hover:bg-primary-light/40'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    expandedFolders[folder.id] ? 'rotate-90' : ''
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <span>{folder.name}</span>
-              </div>
-            </button>
-
-            {expandedFolders[folder.id] && folder.children && (
-              <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary-light/50 pl-3">
-                {folder.children.map((child) => (
-                  <button
-                    key={child.id}
-                    onClick={() => onSelect(child.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                      selectedId === child.id
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-text2 hover:bg-primary-light/40 hover:text-primary'
-                    }`}
-                  >
-                    {child.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        {categories.map((node) => (
+          <CategoryNode
+            key={node.id}
+            node={node}
+            depth={0}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            expandedFolders={expandedFolders}
+            onToggle={toggleFolder}
+          />
         ))}
       </div>
     </nav>

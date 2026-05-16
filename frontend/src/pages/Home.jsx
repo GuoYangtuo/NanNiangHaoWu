@@ -58,19 +58,23 @@ const Home = () => {
     setSelectedCategory(categoryId);
   };
 
-  const findCategoryName = (items, id) => {
-    for (const item of items) {
-      if (item.id === id) return item.name;
-      if (item.children) {
-        const found = findCategoryName(item.children, id);
-        if (found) return found;
+  const flattenCategories = (nodes, ancestors = []) => {
+    const result = [];
+    for (const node of nodes) {
+      const path = [...ancestors, node.name];
+      if (node.type === 'leaf') {
+        result.push({ id: node.id, label: path.join(' / '), name: node.name });
+      } else if (node.children) {
+        result.push(...flattenCategories(node.children, path));
       }
     }
-    return null;
+    return result;
   };
 
+  const flatCategories = categories.length > 0 ? flattenCategories(categories) : [];
+
   const selectedName = selectedCategory
-    ? findCategoryName(categories, selectedCategory)
+    ? flatCategories.find((c) => c.id === selectedCategory)?.name || null
     : null;
 
   return (
@@ -95,14 +99,10 @@ const Home = () => {
             className="w-full px-4 py-2.5 bg-white border border-warm-border rounded-lg text-sm"
           >
             <option value="">全部好物</option>
-            {categories.map((folder) => (
-              <optgroup key={folder.id} label={folder.name}>
-                {folder.children?.map((child) => (
-                  <option key={child.id} value={child.id}>
-                    {child.name}
-                  </option>
-                ))}
-              </optgroup>
+            {flatCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.label}
+              </option>
             ))}
           </select>
         </div>

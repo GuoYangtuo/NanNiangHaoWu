@@ -21,7 +21,7 @@ const Layout = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-                <span className="text-white font-bold text-lg">N</span>
+                <img src="/favicon.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold text-text1 hidden sm:block">
                 {SITE_NAME}
