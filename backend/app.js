@@ -8,7 +8,9 @@ const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 
-const sequelize = require('./models/index');
+const dbModule = require('./models/index');
+const sequelize = dbModule;
+const { createDatabaseIfNotExists } = dbModule;
 const User = require('./models/User');
 const Product = require('./models/Product');
 const ContentEdit = require('./models/ContentEdit');
@@ -90,6 +92,9 @@ const setupAssociations = () => {
 // 初始化数据库并创建管理员账号
 const initializeDatabase = async () => {
   try {
+    // 确保数据库存在，不存在则自动创建
+    await createDatabaseIfNotExists();
+
     // 连接数据库
     await sequelize.authenticate();
     logger.info('Database', '数据库连接成功');

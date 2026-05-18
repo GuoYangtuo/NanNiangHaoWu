@@ -59,4 +59,5 @@ jobs:
             # 安装后端依赖并重启服务
             echo "Restarting backend..."
             cd /root/nannianghaowu_server
+            npm i
             /root/.nvm/versions/node/v24.13.0/bin/pm2 restart nannianghaowu_server
