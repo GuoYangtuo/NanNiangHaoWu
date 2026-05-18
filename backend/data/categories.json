@@ -3,14 +3,15 @@
     "id": "folder-nursing",
     "name": "护理",
     "type": "folder",
+    "content": "# 护理指南\n\n这里整理了各种护理好物和护理方法，帮助你从头到脚全面呵护自己。\n\n### 护理原则\n\n- **适度清洁**：不要过度清洁，以免破坏皮肤屏障\n- **保湿为本**：补水保湿是护肤的基础\n- **坚持防晒**：紫外线是皮肤老化的主要原因\n\n### 推荐步骤\n\n1. 清洁\n2. 爽肤水/精华\n3. 乳液/面霜\n4. 防晒（白天）",
     "children": [
       {
         "id": "nursing-face",
         "name": "面部",
         "type": "folder",
         "children": [
-          { "id": "nursing-face-wash", "name": "洗干净", "type": "leaf" },
-          { "id": "nursing-face-moisturize", "name": "保湿", "type": "leaf" },
+          { "id": "nursing-face-wash", "name": "洗干净", "type": "leaf", "content": "选对洁面产品，温和清洁不伤皮～" },
+          { "id": "nursing-face-moisturize", "name": "保湿", "type": "leaf", "content": "保湿是护肤的第一步，补水锁水缺一不可！" },
           { "id": "nursing-face-antiaging", "name": "抗衰老", "type": "leaf" },
           { "id": "nursing-face-whitening", "name": "美白", "type": "leaf" },
           { "id": "nursing-face-acne", "name": "去痘", "type": "leaf" }
@@ -75,6 +76,7 @@
     "id": "folder-clothing",
     "name": "服装",
     "type": "folder",
+    "content": "## 服装穿搭指南\n\n好看的衣服不仅让人心情愉悦，更能展现个人风格。\n\n### 风格分类\n\n| 风格 | 特点 | 适用场景 |\n|------|------|----------|\n| Lolita | 华丽、精致、公主感 | 聚会、Cosplay活动 |\n| 软妹服 | 可爱、甜美、日常 | 日常出行、约会 |\n| 汉服 | 古典、优雅 | 逛街、拍照、传统节日 |\n| 成熟风 | 优雅、知性 | 上班、正式场合 |\n\n### 选购小贴士\n\n- 注重面料舒适度\n- 考虑搭配性\n- 根据场合选择合适的风格",
     "children": [
       {
         "id": "clothing-dress",

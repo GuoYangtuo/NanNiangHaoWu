@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useCategories } from '../hooks/useCategories';
 
-const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle }) => {
+const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories }) => {
   const isFolder = node.type === 'folder';
   const isExpanded = !!expandedFolders[node.id];
   const isSelected = selectedId === node.id;
+  const hasContent = isFolder && !!node.content;
 
   const handleClick = () => {
     if (isFolder) {
       onToggle(node.id);
+      if (hasContent) {
+        onSelect(node.id);
+      }
     } else {
       onSelect(node.id);
     }
@@ -54,6 +58,7 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
               onSelect={onSelect}
               expandedFolders={expandedFolders}
               onToggle={onToggle}
+              categories={categories}
             />
           ))}
         </div>
@@ -110,6 +115,7 @@ const CategoryTree = ({ selectedId, onSelect }) => {
             onSelect={onSelect}
             expandedFolders={expandedFolders}
             onToggle={toggleFolder}
+            categories={categories}
           />
         ))}
       </div>
