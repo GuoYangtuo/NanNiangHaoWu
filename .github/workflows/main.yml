@@ -34,7 +34,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_SSH_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
-          source: "frontend/build/*"
+          source: "frontend/dist/*"
           target: "/var/www/nannianghaowu/"
           strip_components: 2
 
