@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCategories } from '../hooks/useCategories';
 
-const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories }) => {
+const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories, isLast }) => {
   const isFolder = node.type === 'folder';
   const isExpanded = !!expandedFolders[node.id];
   const isSelected = selectedId === node.id;
@@ -19,7 +19,18 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
   };
 
   return (
-    <div>
+    <div className="relative">
+      {/* 层级纵向装饰线 */}
+      {depth > 0 && (
+        <>
+          {/* 整条垂直线 — 每个子节点同一 depth 共用同一水平位置 */}
+          <div
+            className="absolute top-0 bottom-0 w-px bg-primary/20 pointer-events-none"
+            style={{ left: `${-8 + depth * 24}px` }}
+          />
+        </>
+      )}
+
       <button
         onClick={handleClick}
         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
@@ -49,7 +60,7 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
 
       {isFolder && isExpanded && node.children && (
         <div>
-          {node.children.map((child) => (
+          {node.children.map((child, idx) => (
             <CategoryNode
               key={child.id}
               node={child}
@@ -59,6 +70,7 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
               expandedFolders={expandedFolders}
               onToggle={onToggle}
               categories={categories}
+              isLast={idx === node.children.length - 1}
             />
           ))}
         </div>
