@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ProductCard from './ProductCard';
 
-const Waterfall = ({ products, loading, onLoadMore, hasMore }) => {
+const Waterfall = ({ products, loading, onLoadMore, hasMore, onEdit }) => {
   const [columns, setColumns] = useState(3);
   const containerRef = useRef(null);
 
@@ -69,7 +69,7 @@ const Waterfall = ({ products, loading, onLoadMore, hasMore }) => {
             {columnData.map((column, colIndex) => (
               <div key={colIndex} className="space-y-4">
                 {column.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard key={product.id} product={product} onEdit={onEdit} />
                 ))}
               </div>
             ))}

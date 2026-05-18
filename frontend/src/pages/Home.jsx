@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CategoryTree from '../components/CategoryTree';
 import Waterfall from '../components/Waterfall';
+import ProductEditModal from '../components/ProductEditModal';
 import { useCategories } from '../hooks/useCategories';
 import { getProducts } from '../api/product';
 import { submitContentEdit } from '../api/product';
@@ -47,6 +48,7 @@ const Home = () => {
   const [editContent, setEditContent] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState('');
+  const [editModalProduct, setEditModalProduct] = useState(null);
 
   const selectedFolder = selectedCategory ? findFolderById(categories, selectedCategory) : null;
   const selectedFolderContent = selectedFolder?.content || null;
@@ -111,6 +113,15 @@ const Home = () => {
   };
 
   const isAdmin = user?.role === 'admin';
+
+  const handleEditProduct = useCallback((product) => {
+    setEditModalProduct(product);
+  }, []);
+
+  const handleEditSuccess = useCallback(() => {
+    setPage(1);
+    fetchProducts(selectedCategory, 1, false);
+  }, [fetchProducts, selectedCategory]);
 
   const handleEditSubmit = async () => {
     if (!editContent.trim()) {
@@ -274,6 +285,7 @@ const Home = () => {
             loading={loading}
             onLoadMore={handleLoadMore}
             hasMore={hasMore}
+            onEdit={isAdmin ? handleEditProduct : undefined}
           />
         )}
 
@@ -329,6 +341,15 @@ const Home = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* 商品编辑弹窗 */}
+        {editModalProduct && (
+          <ProductEditModal
+            product={editModalProduct}
+            onClose={() => setEditModalProduct(null)}
+            onSuccess={handleEditSuccess}
+          />
         )}
       </div>
     </div>

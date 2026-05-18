@@ -7,7 +7,8 @@ const User = require('../models/User');
 const ContentEdit = require('../models/ContentEdit');
 const { authMiddleware } = require('../middlewares/auth');
 const { adminMiddleware } = require('../middlewares/admin');
-const { getCategoryById, reload: reloadCategories } = require('../data/categories');
+const { getCategoryById, reload: reloadCategories, isValidCategory } = require('../data/categories');
+const upload = require('../middlewares/upload');
 const { success, badRequest, notFound, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
 const fs = require('fs');
@@ -133,6 +134,110 @@ router.delete('/products/:id', async (req, res) => {
     return success(res, null, '商品已删除');
   } catch (err) {
     logger.error('Admin', '删除商品失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// PUT /api/admin/products/:id - 管理员修改商品
+router.put('/products/:id', upload.array('images', 9), async (req, res) => {
+  try {
+    const product = await Product.findByPk(req.params.id);
+
+    if (!product) {
+      if (req.files && req.files.length > 0) {
+        req.files.forEach((file) => {
+          const filepath = path.join(__dirname, '..', 'uploads', file.filename);
+          if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        });
+      }
+      return notFound(res, '商品不存在');
+    }
+
+    const { category_id, name, description, purchase_link, delete_images } = req.body;
+
+    if (category_id && !isValidCategory(category_id)) {
+      if (req.files && req.files.length > 0) {
+        req.files.forEach((file) => {
+          const filepath = path.join(__dirname, '..', 'uploads', file.filename);
+          if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        });
+      }
+      return badRequest(res, '选择的分类不存在');
+    }
+
+    const updateData = {};
+    if (category_id) updateData.category_id = category_id;
+    if (name !== undefined) {
+      if (!name.trim() || name.length > 200) {
+        if (req.files && req.files.length > 0) {
+          req.files.forEach((file) => {
+            const filepath = path.join(__dirname, '..', 'uploads', file.filename);
+            if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+          });
+        }
+        return badRequest(res, '商品名称长度需在 1-200 个字符之间');
+      }
+      updateData.name = name.trim();
+    }
+    if (description !== undefined) {
+      if (description.length > 5000) {
+        if (req.files && req.files.length > 0) {
+          req.files.forEach((file) => {
+            const filepath = path.join(__dirname, '..', 'uploads', file.filename);
+            if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+          });
+        }
+        return badRequest(res, '简介长度不能超过 5000 个字符');
+      }
+      updateData.description = description ? description.trim() : null;
+    }
+    if (purchase_link !== undefined) {
+      if (purchase_link && !/^https?:\/\/.+/.test(purchase_link)) {
+        if (req.files && req.files.length > 0) {
+          req.files.forEach((file) => {
+            const filepath = path.join(__dirname, '..', 'uploads', file.filename);
+            if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+          });
+        }
+        return badRequest(res, '请输入有效的购买链接');
+      }
+      updateData.purchase_link = purchase_link ? purchase_link.trim() : null;
+    }
+
+    const newImageFiles = (req.files || []).map((file) => file.filename);
+
+    let updatedImages = product.images || [];
+    if (delete_images) {
+      const toDelete = Array.isArray(delete_images) ? delete_images : [delete_images];
+      toDelete.forEach((img) => {
+        const filepath = path.join(__dirname, '..', 'uploads', img);
+        if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        updatedImages = updatedImages.filter((i) => i !== img);
+      });
+    }
+    if (newImageFiles.length > 0) {
+      updatedImages = [...updatedImages, ...newImageFiles];
+    }
+    if (updatedImages.length > 0 || newImageFiles.length > 0 || delete_images) {
+      updateData.images = updatedImages;
+    }
+
+    await product.update(updateData);
+
+    const cat = getCategoryById(product.category_id);
+
+    logger.info('Admin', `管理员修改了商品: ${product.name}`);
+
+    return success(res, {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      purchase_link: product.purchase_link,
+      images: (product.images || []).map((img) => `/uploads/${img}`),
+      category: cat ? { id: cat.id, name: cat.name } : null
+    }, '商品已更新');
+  } catch (err) {
+    logger.error('Admin', '管理员修改商品失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });

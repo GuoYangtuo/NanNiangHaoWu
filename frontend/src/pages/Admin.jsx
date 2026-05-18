@@ -4,6 +4,7 @@ import { getAdminProducts, verifyProduct, deleteAdminProduct } from '../api/admi
 import { getAdminUsers, updateUserStatus } from '../api/admin';
 import { getAdminContentEdits, verifyContentEdit } from '../api/admin';
 import { STATUS_COLORS } from '../utils/constants';
+import ProductEditModal from '../components/ProductEditModal';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('review');
@@ -12,6 +13,7 @@ const Admin = () => {
   const [contentEdits, setContentEdits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
+  const [editModalProduct, setEditModalProduct] = useState(null);
 
   const tabs = [
     { id: 'review', label: '商品审核', badge: null },
@@ -116,6 +118,17 @@ const Admin = () => {
       alert(err.message || '删除失败');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // 编辑商品
+  const handleEditProduct = (product) => {
+    setEditModalProduct(product);
+  };
+
+  const handleEditSuccess = () => {
+    if (activeTab === 'products') {
+      fetchAllProducts();
     }
   };
 
@@ -404,6 +417,13 @@ const Admin = () => {
                                 查看
                               </Link>
                               <button
+                                onClick={() => handleEditProduct(product)}
+                                disabled={actionLoading === product.id}
+                                className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors disabled:opacity-50"
+                              >
+                                编辑
+                              </button>
+                              <button
                                 onClick={() => handleDeleteProduct(product.id)}
                                 disabled={actionLoading === product.id}
                                 className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
@@ -483,6 +503,15 @@ const Admin = () => {
           </>
         )}
       </div>
+
+      {/* 商品编辑弹窗 */}
+      {editModalProduct && (
+        <ProductEditModal
+          product={editModalProduct}
+          onClose={() => setEditModalProduct(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 };

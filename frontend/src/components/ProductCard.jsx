@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, onEdit }) => {
   const { id, name, images, category, user, created_at } = product;
 
   // images 数组中每个元素已经是完整的 /uploads/xxx 格式，或者原始文件名
@@ -32,6 +32,22 @@ const ProductCard = ({ product }) => {
           <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 text-white text-xs rounded-full">
             +{images.length - 1}
           </div>
+        )}
+        {onEdit && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEdit(product);
+            }}
+            className="absolute top-2 left-2 px-2.5 py-1.5 bg-primary/80 hover:bg-primary text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 shadow-sm"
+            title="编辑商品"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            编辑
+          </button>
         )}
       </div>
 

@@ -1,29 +1,35 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../api/product';
+import { useAuth } from '../context/AuthContext';
+import ProductEditModal from '../components/ProductEditModal';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [editModalProduct, setEditModalProduct] = useState(null);
+
+  const isAdmin = user?.role === 'admin';
+
+  const fetchProduct = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getProductById(id);
+      setProduct(res.data);
+    } catch (err) {
+      setError(err.message || '获取商品详情失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const res = await getProductById(id);
-        setProduct(res.data);
-      } catch (err) {
-        setError(err.message || '获取商品详情失败');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) {
       fetchProduct();
     }
@@ -173,11 +179,22 @@ const ProductDetail = () => {
         <div className="p-6 md:p-8">
           {/* 标题和分类 */}
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center justify-between gap-2 mb-3">
               {product.category && (
                 <span className="px-3 py-1 bg-primary-light/60 text-primary-dark text-xs font-medium rounded-full">
                   {product.category.name}
                 </span>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={() => setEditModalProduct(product)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  编辑
+                </button>
               )}
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-text1">{product.name}</h1>
@@ -235,6 +252,17 @@ const ProductDetail = () => {
           )}
         </div>
       </div>
+
+      {/* 商品编辑弹窗 */}
+      {editModalProduct && (
+        <ProductEditModal
+          product={editModalProduct}
+          onClose={() => setEditModalProduct(null)}
+          onSuccess={() => {
+            fetchProduct();
+          }}
+        />
+      )}
     </div>
   );
 };
