@@ -133,7 +133,7 @@
   },
   {
     "id": "folder-adult",
-    "name": "变色情",
+    "name": "色色",
     "type": "folder",
     "children": [
       { "id": "adult-lingerie", "name": "情趣内衣", "type": "leaf" },

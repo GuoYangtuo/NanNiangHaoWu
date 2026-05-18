@@ -113,7 +113,7 @@ const Home = () => {
             {selectedName || '好物推荐'}
           </h1>
           <p className="text-text2 mt-1 text-sm">
-            发现值得推荐的好物，一起抄作业吧~
+            发现值得入手的好物，一起抄作业吧~
           </p>
         </div>
 

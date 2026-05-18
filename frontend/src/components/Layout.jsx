@@ -89,7 +89,7 @@ const Layout = () => {
       </main>
 
       {/* 页脚 */}
-      <footer className="bg-white border-t border-warm-border mt-16">
+      <footer className="bg-white border-t border-warm-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <p className="text-sm text-text2">

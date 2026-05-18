@@ -8,13 +8,142 @@ const flattenCategories = (nodes, ancestors = []) => {
   const result = [];
   for (const node of nodes) {
     const path = [...ancestors, node.name];
-    if (node.type === 'leaf') {
-      result.push({ id: node.id, label: path.join(' / ') });
-    } else if (node.children) {
+    if (node.children) {
       result.push(...flattenCategories(node.children, path));
+    } else {
+      result.push({ id: node.id, label: node.name, ancestors: path.slice(0, -1) });
     }
   }
   return result;
+};
+
+const CategorySelect = ({ value, onChange, categories, error }) => {
+  const [open, setOpen] = useState(false);
+
+  const flatCategories = categories.length > 0 ? flattenCategories(categories) : [];
+
+  const selected = flatCategories.find((c) => c.id === value);
+
+  const handleSelect = (cat) => {
+    onChange({ target: { name: 'category_id', value: cat.id } });
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`w-full px-4 py-3 border rounded-lg text-sm bg-white text-left focus:ring-2 focus:ring-primary/20 transition-colors flex items-center justify-between ${
+          error ? 'border-red-400' : 'border-warm-border'
+        }`}
+      >
+        <span className={selected ? 'text-text1' : 'text-text2/60'}>
+          {selected ? (
+            <>
+              {selected.ancestors.map((a, i) => (
+                <span key={i} className="text-text2">{i > 0 ? ' / ' : ''}{a}</span>
+              ))}
+              {selected.ancestors.length > 0 && <span className="text-text2"> / </span>}
+              <span className="text-text1">{selected.label}</span>
+            </>
+          ) : (
+            '请选择分类'
+          )}
+        </span>
+        <svg className={`w-4 h-4 text-text2 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-warm-border rounded-lg shadow-lg max-h-[500px] overflow-y-auto">
+          <CategoryTree nodes={categories} onSelect={handleSelect} selectedId={value} ancestors={[]} />
+        </div>
+      )}
+
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+};
+
+const CategoryTree = ({ nodes, onSelect, selectedId, ancestors }) => {
+  return (
+    <div className="py-1">
+      {nodes.map((node) => {
+        const path = [...ancestors, node.name];
+        if (node.children) {
+          return (
+            <CategoryBranch
+              key={node.id || node.name}
+              node={node}
+              path={path}
+              onSelect={onSelect}
+              selectedId={selectedId}
+            />
+          );
+        }
+        const isSelected = node.id === selectedId;
+        return (
+          <button
+            key={node.id}
+            type="button"
+            onClick={() => onSelect({ id: node.id, label: node.name, ancestors })}
+            className={`w-full px-4 py-2 text-sm text-left hover:bg-primary/5 transition-colors ${
+              isSelected ? 'bg-primary/10 text-primary font-medium' : 'text-text1'
+            }`}
+          >
+            {node.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+const CategoryBranch = ({ node, path, onSelect, selectedId }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const hasSelectedChild = (nodes) => {
+    for (const n of nodes) {
+      if (n.id === selectedId) return true;
+      if (n.children && hasSelectedChild(n.children)) return true;
+    }
+    return false;
+  };
+
+  const isChildSelected = hasSelectedChild(node.children || []);
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className={`w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-primary/5 transition-colors ${
+          isChildSelected ? 'text-primary font-medium' : 'text-text1'
+        }`}
+      >
+        <span>{node.name}</span>
+        <svg
+          className={`w-3 h-3 text-text2 transition-transform ${expanded ? 'rotate-90' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      {expanded && (
+        <div className="pl-4 border-l border-warm-border/50 ml-3">
+          <CategoryTree
+            nodes={node.children}
+            onSelect={onSelect}
+            selectedId={selectedId}
+            ancestors={path}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
 const Upload = () => {
@@ -30,8 +159,6 @@ const Upload = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
-
-  const flatCategories = categories.length > 0 ? flattenCategories(categories) : [];
 
   const validate = () => {
     const errors = {};
@@ -50,7 +177,9 @@ const Upload = () => {
       errors.description = '请输入使用感受或推荐理由';
     }
 
-    if (form.purchase_link && !/^https?:\/\/.+/.test(form.purchase_link)) {
+    if (!form.purchase_link.trim()) {
+      errors.purchase_link = '请输入参考购买链接';
+    } else if (!/^https?:\/\/.+/.test(form.purchase_link)) {
       errors.purchase_link = '请输入有效的链接（以 http:// 或 https:// 开头）';
     }
 
@@ -75,9 +204,7 @@ const Upload = () => {
       formData.append('category_id', form.category_id);
       formData.append('name', form.name.trim());
       formData.append('description', form.description.trim());
-      if (form.purchase_link.trim()) {
-        formData.append('purchase_link', form.purchase_link.trim());
-      }
+      formData.append('purchase_link', form.purchase_link.trim());
 
       const newImages = images.filter((img) => img.isNew);
       newImages.forEach((img) => {
@@ -115,7 +242,7 @@ const Upload = () => {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text1">上传好物</h1>
-        <p className="text-text2 mt-1">分享你使用过的好物，让更多姐妹抄作业~</p>
+        <p className="text-text2 mt-1">分享你使用过的好物，为更多可爱的小南娘扫清变美路上的重重障碍~</p>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-card p-6 md:p-8">
@@ -130,24 +257,13 @@ const Upload = () => {
             <label className="block text-sm font-medium text-text1 mb-1.5">
               分类 <span className="text-red-500">*</span>
             </label>
-            <select
+            <CategorySelect
               name="category_id"
               value={form.category_id}
               onChange={handleChange}
-              className={`w-full px-4 py-3 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary/20 transition-colors ${
-                fieldErrors.category_id ? 'border-red-400' : 'border-warm-border'
-              }`}
-            >
-              <option value="">请选择分类</option>
-              {flatCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.label}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.category_id && (
-              <p className="mt-1 text-xs text-red-500">{fieldErrors.category_id}</p>
-            )}
+              categories={categories}
+              error={fieldErrors.category_id}
+            />
           </div>
 
           <div>
@@ -173,13 +289,13 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              使用感受 / 推荐理由 <span className="text-red-500">*</span>
+              使用感受 / 推荐理由 / 使用方法 <span className="text-red-500">*</span>
             </label>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              placeholder="说说你的使用感受、推荐理由、使用方法等，让姐妹们更好地了解这个好物~"
+              placeholder="裙子尺码很大，适合大体型小南娘 / 香水味道很廉价劣质，不值得买 ...（内容丰富、长篇、优质的评价更易通过审核）"
               rows={5}
               className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-colors resize-none ${
                 fieldErrors.description ? 'border-red-400' : 'border-warm-border'
@@ -192,7 +308,7 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              参考购买链接
+              参考购买链接 <span className="text-red-500">*</span>
             </label>
             <input
               type="url"
@@ -207,7 +323,6 @@ const Upload = () => {
             {fieldErrors.purchase_link && (
               <p className="mt-1 text-xs text-red-500">{fieldErrors.purchase_link}</p>
             )}
-            <p className="mt-1 text-xs text-text2/60">选填，可帮助姐妹们找到同款</p>
           </div>
 
           <div>
