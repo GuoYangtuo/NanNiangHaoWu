@@ -20,7 +20,7 @@ const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // 确保 uploads 目录存在
 const uploadsDir = path.join(__dirname, 'uploads');
