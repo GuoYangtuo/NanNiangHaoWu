@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { authMiddleware } = require('../middlewares/auth');
-const { success, badRequest, unauthorized, conflict, serverError } = require('../utils/response');
+const { success, badRequest, unauthorized, forbidden, conflict, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
 
 const router = express.Router();

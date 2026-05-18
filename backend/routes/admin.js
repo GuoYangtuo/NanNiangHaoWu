@@ -320,7 +320,7 @@ router.put('/users/:id/status', [
       id: user.id,
       username: user.username,
       status: user.status
-    }, `用户已${status === 'banned' ? '封禁' : '激活'}`);
+    }, `用户已${status === 'banned' ? '封禁' : '解封'}`);
   } catch (err) {
     logger.error('Admin', '更新用户状态失败', { error: err.message });
     return serverError(res, '服务器错误');

@@ -121,14 +121,10 @@ const Admin = () => {
 
   // 更新用户状态
   const handleUpdateUserStatus = async (userId, newStatus) => {
-    const action = newStatus === 'banned' ? '封禁' : '激活';
-    if (!confirm(`确定要${action}这个用户吗？`)) return;
-
     setActionLoading(userId);
     try {
       await updateUserStatus(userId, newStatus);
       setUsers(users.map((u) => (u.id === userId ? { ...u, status: newStatus } : u)));
-      alert(`已${action}用户`);
     } catch (err) {
       alert(err.message || '操作失败');
     } finally {
@@ -324,7 +320,7 @@ const Admin = () => {
                                     : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                                 }`}
                               >
-                                {user.status === 'active' ? '封禁' : '激活'}
+                                {user.status === 'active' ? '封禁' : '解封'}
                               </button>
                             )}
                           </td>
