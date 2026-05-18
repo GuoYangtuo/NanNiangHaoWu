@@ -48,6 +48,7 @@ router.get('/products', async (req, res) => {
       const cat = getCategoryById(p.category_id);
       return {
         id: p.id,
+        category_id: p.category_id,
         name: p.name,
         description: p.description,
         purchase_link: p.purchase_link,
@@ -230,6 +231,7 @@ router.put('/products/:id', upload.array('images', 9), async (req, res) => {
 
     return success(res, {
       id: product.id,
+      category_id: product.category_id,
       name: product.name,
       description: product.description,
       purchase_link: product.purchase_link,

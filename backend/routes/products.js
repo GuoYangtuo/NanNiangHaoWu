@@ -67,6 +67,7 @@ router.get('/', optionalAuth, async (req, res) => {
       const cat = getCategoryById(p.category_id);
       return {
         id: p.id,
+        category_id: p.category_id,
         name: p.name,
         description: p.description,
         purchase_link: p.purchase_link,
