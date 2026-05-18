@@ -81,11 +81,13 @@ const Register = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-primary flex items-center justify-center mb-4 shadow-lg">
-            <span className="text-white font-bold text-3xl">N</span>
-          </div>
+          <img
+            src="/favicon.png"
+            alt="Logo"
+            className="w-16 h-16 mx-auto rounded-2xl object-cover mb-4"
+          />
           <h1 className="text-2xl font-bold text-text1">{SITE_NAME}</h1>
-          <p className="text-text2 mt-1">加入我们，一起分享好物</p>
+          <p className="text-text2 mt-1">加入社区，一起分享变美经验吧~</p>
         </div>
 
         {/* 注册表单 */}

@@ -1,7 +1,7 @@
 'use strict';
 
 const { Sequelize } = require('sequelize');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
