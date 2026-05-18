@@ -2,19 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAdminProducts, verifyProduct, deleteAdminProduct } from '../api/admin';
 import { getAdminUsers, updateUserStatus } from '../api/admin';
+import { getAdminContentEdits, verifyContentEdit } from '../api/admin';
 import { STATUS_COLORS } from '../utils/constants';
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('review');
   const [products, setProducts] = useState([]);
   const [users, setUsers] = useState([]);
+  const [contentEdits, setContentEdits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
 
   const tabs = [
     { id: 'review', label: '商品审核', badge: null },
     { id: 'users', label: '用户管理', badge: null },
-    { id: 'products', label: '商品管理', badge: null }
+    { id: 'products', label: '商品管理', badge: null },
+    { id: 'content-edits', label: '文案改进', badge: null }
   ];
 
   // 获取待审核商品
@@ -56,6 +59,19 @@ const Admin = () => {
     }
   };
 
+  // 获取文案改进申请
+  const fetchContentEdits = async () => {
+    setLoading(true);
+    try {
+      const res = await getAdminContentEdits({ limit: 50 });
+      setContentEdits(res.data.contentEdits);
+    } catch (err) {
+      console.error('获取文案改进列表失败:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'review') {
       fetchPendingProducts();
@@ -63,6 +79,8 @@ const Admin = () => {
       fetchUsers();
     } else if (activeTab === 'products') {
       fetchAllProducts();
+    } else if (activeTab === 'content-edits') {
+      fetchContentEdits();
     }
   }, [activeTab]);
 
@@ -111,6 +129,23 @@ const Admin = () => {
       await updateUserStatus(userId, newStatus);
       setUsers(users.map((u) => (u.id === userId ? { ...u, status: newStatus } : u)));
       alert(`已${action}用户`);
+    } catch (err) {
+      alert(err.message || '操作失败');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 审核文案改进
+  const handleVerifyContentEdit = async (editId, status) => {
+    const action = status === 'approved' ? '通过' : '拒绝';
+    if (!confirm(`确定要${action}这个文案改进申请吗？${status === 'approved' ? '通过后内容将直接更新到 categories.json。' : ''}`)) return;
+
+    setActionLoading(editId);
+    try {
+      await verifyContentEdit(editId, status);
+      setContentEdits(contentEdits.filter((e) => e.id !== editId));
+      alert(`已${action}`);
     } catch (err) {
       alert(err.message || '操作失败');
     } finally {
@@ -390,6 +425,61 @@ const Admin = () => {
                 {products.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <p className="text-text2">暂无商品数据</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 文案改进 Tab */}
+            {activeTab === 'content-edits' && (
+              <div>
+                {contentEdits.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-16 h-16 mb-4 rounded-full bg-emerald-50 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-text2 text-lg">暂无待审核的文案改进</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {contentEdits.map((edit) => (
+                      <div key={edit.id} className="bg-white rounded-xl shadow-card overflow-hidden">
+                        <div className="px-5 py-4 border-b border-warm-border">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm font-medium text-text1">{edit.category_name}</h3>
+                              <p className="text-xs text-text2 mt-0.5">
+                                申请人：{edit.user?.username || '未知'} · {formatDate(edit.created_at)}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleVerifyContentEdit(edit.id, 'approved')}
+                                disabled={actionLoading === edit.id}
+                                className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                通过
+                              </button>
+                              <button
+                                onClick={() => handleVerifyContentEdit(edit.id, 'rejected')}
+                                disabled={actionLoading === edit.id}
+                                className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                拒绝
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="px-5 py-4 bg-warm-bg/50">
+                          <p className="text-xs text-text2 font-medium mb-2">改进后内容预览：</p>
+                          <div className="bg-white rounded-lg border border-warm-border p-4 max-h-64 overflow-y-auto">
+                            <pre className="text-xs text-text1 whitespace-pre-wrap font-mono leading-relaxed">{edit.new_content}</pre>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

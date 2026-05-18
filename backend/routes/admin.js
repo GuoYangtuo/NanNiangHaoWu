@@ -4,11 +4,14 @@ const express = require('express');
 const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const ContentEdit = require('../models/ContentEdit');
 const { authMiddleware } = require('../middlewares/auth');
 const { adminMiddleware } = require('../middlewares/admin');
-const { getCategoryById } = require('../data/categories');
+const { getCategoryById, reload: reloadCategories } = require('../data/categories');
 const { success, badRequest, notFound, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 
@@ -164,6 +167,120 @@ router.get('/users', async (req, res) => {
     });
   } catch (err) {
     logger.error('Admin', '获取用户列表失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// GET /api/admin/content-edits - 获取文案改进申请列表
+router.get('/content-edits', async (req, res) => {
+  try {
+    const { status, page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const whereClause = {};
+    if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+      whereClause.status = status;
+    }
+
+    const { count, rows: edits } = await ContentEdit.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'username', 'email']
+        }
+      ],
+      order: [['created_at', 'DESC']],
+      limit: parseInt(limit),
+      offset
+    });
+
+    const processedEdits = edits.map(edit => {
+      const folder = getCategoryById(edit.category_id);
+      return {
+        id: edit.id,
+        category_id: edit.category_id,
+        category_name: folder ? folder.name : edit.category_id,
+        user: edit.user,
+        new_content: edit.new_content,
+        status: edit.status,
+        created_at: edit.created_at
+      };
+    });
+
+    return success(res, {
+      contentEdits: processedEdits,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / parseInt(limit))
+      }
+    });
+  } catch (err) {
+    logger.error('Admin', '获取文案改进列表失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// PUT /api/admin/content-edits/:id/verify - 审核文案改进申请
+router.put('/content-edits/:id/verify', [
+  body('status').isIn(['approved', 'rejected']).withMessage('状态必须是 approved 或 rejected')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return badRequest(res, errors.array()[0].msg);
+    }
+
+    const { status } = req.body;
+    const edit = await ContentEdit.findByPk(req.params.id);
+
+    if (!edit) {
+      return notFound(res, '文案改进申请不存在');
+    }
+
+    if (edit.status !== 'pending') {
+      return badRequest(res, '只能审核待处理状态的申请');
+    }
+
+    if (status === 'approved') {
+      // 将新内容写入 categories.json
+      const categoriesPath = path.join(__dirname, '..', 'data', 'categories.json');
+      const rawData = fs.readFileSync(categoriesPath, 'utf-8');
+      let categories = JSON.parse(rawData);
+
+      const updateContent = (nodes) => {
+        for (const node of nodes) {
+          if (node.id === edit.category_id) {
+            node.content = edit.new_content;
+            return true;
+          }
+          if (node.children) {
+            const found = updateContent(node.children);
+            if (found) return true;
+          }
+        }
+        return false;
+      };
+
+      if (!updateContent(categories)) {
+        return notFound(res, '未找到对应分类，无法应用更改');
+      }
+
+      fs.writeFileSync(categoriesPath, JSON.stringify(categories, null, 2), 'utf-8');
+      reloadCategories();
+      logger.info('Admin', `文案改进已应用，分类ID: ${edit.category_id}`);
+    }
+
+    await edit.update({ status });
+
+    logger.info('Admin', `管理员审核文案改进: ID=${edit.id} -> ${status}`);
+
+    return success(res, { id: edit.id, status }, `文案改进已${status === 'approved' ? '通过' : '拒绝'}`);
+  } catch (err) {
+    logger.error('Admin', '审核文案改进失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });

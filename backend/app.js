@@ -11,6 +11,7 @@ const fs = require('fs');
 const sequelize = require('./models/index');
 const User = require('./models/User');
 const Product = require('./models/Product');
+const ContentEdit = require('./models/ContentEdit');
 const logger = require('./utils/logger');
 
 const authRoutes = require('./routes/auth');
@@ -83,6 +84,7 @@ app.use((err, req, res, next) => {
 // 设置模型关联
 const setupAssociations = () => {
   Product.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+  ContentEdit.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
 };
 
 // 初始化数据库并创建管理员账号
@@ -95,9 +97,33 @@ const initializeDatabase = async () => {
     // 设置关联
     setupAssociations();
 
-    // 同步模型（开发环境使用）
-    await sequelize.sync({ alter: true });
+    // 安全同步：仅创建缺失的表/列，不 alter 现有表，避免 MySQL 64 key 限制
+    await sequelize.sync();
     logger.info('Database', '数据库模型同步完成');
+
+    // 手动创建 content_edits 表（如果不存在），避免依赖 alter 触发 64 key 限制
+    const [tables] = await sequelize.query(
+      "SHOW TABLES LIKE 'content_edits'",
+      { type: sequelize.QueryTypes.SHOWTABLE }
+    );
+    if (!tables || tables.length === 0) {
+      await sequelize.query(`
+        CREATE TABLE IF NOT EXISTS content_edits (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          category_id VARCHAR(100) NOT NULL,
+          user_id INT NOT NULL,
+          new_content TEXT NOT NULL,
+          status ENUM('pending','approved','rejected') DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_category (category_id),
+          INDEX idx_user (user_id),
+          INDEX idx_status (status),
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `);
+      logger.info('Database', 'content_edits 表创建完成');
+    }
 
     // 创建管理员账号
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456';

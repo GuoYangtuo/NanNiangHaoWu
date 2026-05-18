@@ -3,18 +3,40 @@
     "id": "folder-nursing",
     "name": "护理",
     "type": "folder",
-    "content": "# 护理指南\n\n这里整理了各种护理好物和护理方法，帮助你从头到脚全面呵护自己。\n\n### 护理原则\n\n- **适度清洁**：不要过度清洁，以免破坏皮肤屏障\n- **保湿为本**：补水保湿是护肤的基础\n- **坚持防晒**：紫外线是皮肤老化的主要原因\n\n### 推荐步骤\n\n1. 清洁\n2. 爽肤水/精华\n3. 乳液/面霜\n4. 防晒（白天）",
+    "content": "# 护理指南\n\n这里整理了各种护理好物和护理方法，帮助你从头到脚全面呵护自己。\n\n### 护理原则\n\n- **适度清洁**：不要过度清洁，以免破坏皮肤屏障\n- **保湿为本**：补水保湿是护肤的基础\n- **坚持防晒**：紫外线是皮肤老化的主要原因\n\n### 推荐步骤\n\n1. 清洁\n2. 爽肤水/精华\n3. 乳液/面霜\n4. 防晒（白天）\n5. wadawd",
     "children": [
       {
         "id": "nursing-face",
         "name": "面部",
         "type": "folder",
         "children": [
-          { "id": "nursing-face-wash", "name": "洗干净", "type": "leaf", "content": "选对洁面产品，温和清洁不伤皮～" },
-          { "id": "nursing-face-moisturize", "name": "保湿", "type": "leaf", "content": "保湿是护肤的第一步，补水锁水缺一不可！" },
-          { "id": "nursing-face-antiaging", "name": "抗衰老", "type": "leaf" },
-          { "id": "nursing-face-whitening", "name": "美白", "type": "leaf" },
-          { "id": "nursing-face-acne", "name": "去痘", "type": "leaf" }
+          {
+            "id": "nursing-face-wash",
+            "name": "洗干净",
+            "type": "leaf",
+            "content": "选对洁面产品，温和清洁不伤皮～"
+          },
+          {
+            "id": "nursing-face-moisturize",
+            "name": "保湿",
+            "type": "leaf",
+            "content": "保湿是护肤的第一步，补水锁水缺一不可！"
+          },
+          {
+            "id": "nursing-face-antiaging",
+            "name": "抗衰老",
+            "type": "leaf"
+          },
+          {
+            "id": "nursing-face-whitening",
+            "name": "美白",
+            "type": "leaf"
+          },
+          {
+            "id": "nursing-face-acne",
+            "name": "去痘",
+            "type": "leaf"
+          }
         ]
       },
       {
@@ -22,32 +44,80 @@
         "name": "身体",
         "type": "folder",
         "children": [
-          { "id": "nursing-body-slim", "name": "变瘦", "type": "leaf" },
+          {
+            "id": "nursing-body-slim",
+            "name": "变瘦",
+            "type": "leaf"
+          },
           {
             "id": "nursing-body-fragrant",
             "name": "变香变白嫩",
             "type": "folder",
             "children": [
-              { "id": "nursing-body-shower-gel", "name": "沐浴露", "type": "leaf" },
-              { "id": "nursing-body-lotion", "name": "身体乳", "type": "leaf" },
-              { "id": "nursing-body-shampoo", "name": "洗发水", "type": "leaf" },
-              { "id": "nursing-body-conditioner", "name": "护发素", "type": "leaf" },
-              { "id": "nursing-body-perfume", "name": "香水", "type": "leaf" }
+              {
+                "id": "nursing-body-shower-gel",
+                "name": "沐浴露",
+                "type": "leaf"
+              },
+              {
+                "id": "nursing-body-lotion",
+                "name": "身体乳",
+                "type": "leaf"
+              },
+              {
+                "id": "nursing-body-shampoo",
+                "name": "洗发水",
+                "type": "leaf"
+              },
+              {
+                "id": "nursing-body-conditioner",
+                "name": "护发素",
+                "type": "leaf"
+              },
+              {
+                "id": "nursing-body-perfume",
+                "name": "香水",
+                "type": "leaf"
+              }
             ]
           },
-          { "id": "nursing-body-antiaging", "name": "抗衰老", "type": "leaf" }
+          {
+            "id": "nursing-body-antiaging",
+            "name": "抗衰老",
+            "type": "leaf"
+          }
         ]
       },
-      { "id": "nursing-hand", "name": "手", "type": "leaf" },
+      {
+        "id": "nursing-hand",
+        "name": "手",
+        "type": "leaf"
+      },
       {
         "id": "nursing-mouth",
         "name": "嘴巴",
         "type": "folder",
         "children": [
-          { "id": "nursing-mouth-toothpaste", "name": "牙膏", "type": "leaf" },
-          { "id": "nursing-mouth-toothbrush", "name": "牙刷", "type": "leaf" },
-          { "id": "nursing-mouth-mouthwash", "name": "漱口水", "type": "leaf" },
-          { "id": "nursing-mouth-gum", "name": "口香糖", "type": "leaf" }
+          {
+            "id": "nursing-mouth-toothpaste",
+            "name": "牙膏",
+            "type": "leaf"
+          },
+          {
+            "id": "nursing-mouth-toothbrush",
+            "name": "牙刷",
+            "type": "leaf"
+          },
+          {
+            "id": "nursing-mouth-mouthwash",
+            "name": "漱口水",
+            "type": "leaf"
+          },
+          {
+            "id": "nursing-mouth-gum",
+            "name": "口香糖",
+            "type": "leaf"
+          }
         ]
       }
     ]
@@ -62,14 +132,38 @@
         "name": "面部",
         "type": "folder",
         "children": [
-          { "id": "makeup-face-base", "name": "底妆", "type": "leaf" },
-          { "id": "makeup-face-eye", "name": "眼睛", "type": "leaf" },
-          { "id": "makeup-face-lip", "name": "嘴唇", "type": "leaf" },
-          { "id": "makeup-face-nose", "name": "鼻子", "type": "leaf" }
+          {
+            "id": "makeup-face-base",
+            "name": "底妆",
+            "type": "leaf"
+          },
+          {
+            "id": "makeup-face-eye",
+            "name": "眼睛",
+            "type": "leaf"
+          },
+          {
+            "id": "makeup-face-lip",
+            "name": "嘴唇",
+            "type": "leaf"
+          },
+          {
+            "id": "makeup-face-nose",
+            "name": "鼻子",
+            "type": "leaf"
+          }
         ]
       },
-      { "id": "makeup-body", "name": "身体", "type": "leaf" },
-      { "id": "makeup-nail", "name": "指甲", "type": "leaf" }
+      {
+        "id": "makeup-body",
+        "name": "身体",
+        "type": "leaf"
+      },
+      {
+        "id": "makeup-nail",
+        "name": "指甲",
+        "type": "leaf"
+      }
     ]
   },
   {
@@ -83,13 +177,41 @@
         "name": "裙子",
         "type": "folder",
         "children": [
-          { "id": "clothing-dress-jk", "name": "制服(jk等)", "type": "leaf" },
-          { "id": "clothing-dress-lolita", "name": "Lolita", "type": "leaf" },
-          { "id": "clothing-dress-softgirl", "name": "软妹服 / 日常可爱风", "type": "leaf" },
-          { "id": "clothing-dress-hanfu", "name": "汉服 / 汉元素", "type": "leaf" },
-          { "id": "clothing-dress-mature", "name": "成熟性感风（日常，非情趣）", "type": "leaf" },
-          { "id": "clothing-dress-pajamas", "name": "睡裙 / 私服", "type": "leaf" },
-          { "id": "clothing-dress-cosplay", "name": "Cosplay", "type": "leaf" }
+          {
+            "id": "clothing-dress-jk",
+            "name": "制服(jk等)",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-dress-lolita",
+            "name": "Lolita",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-dress-softgirl",
+            "name": "软妹服 / 日常可爱风",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-dress-hanfu",
+            "name": "汉服 / 汉元素",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-dress-mature",
+            "name": "成熟性感风（日常，非情趣）",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-dress-pajamas",
+            "name": "睡裙 / 私服",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-dress-cosplay",
+            "name": "Cosplay",
+            "type": "leaf"
+          }
         ]
       },
       {
@@ -97,10 +219,26 @@
         "name": "袜子",
         "type": "folder",
         "children": [
-          { "id": "clothing-socks-thigh", "name": "大腿袜", "type": "leaf" },
-          { "id": "clothing-socks-knee", "name": "过膝袜", "type": "leaf" },
-          { "id": "clothing-socks-calf", "name": "小腿袜", "type": "leaf" },
-          { "id": "clothing-socks-ankle", "name": "短袜", "type": "leaf" }
+          {
+            "id": "clothing-socks-thigh",
+            "name": "大腿袜",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-socks-knee",
+            "name": "过膝袜",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-socks-calf",
+            "name": "小腿袜",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-socks-ankle",
+            "name": "短袜",
+            "type": "leaf"
+          }
         ]
       },
       {
@@ -113,12 +251,28 @@
             "name": "制服",
             "type": "folder",
             "children": [
-              { "id": "clothing-shoes-uniform-jk", "name": "jk", "type": "leaf" }
+              {
+                "id": "clothing-shoes-uniform-jk",
+                "name": "jk",
+                "type": "leaf"
+              }
             ]
           },
-          { "id": "clothing-shoes-lolita", "name": "Lolita", "type": "leaf" },
-          { "id": "clothing-shoes-softgirl", "name": "软妹服 / 日常可爱风", "type": "leaf" },
-          { "id": "clothing-shoes-hanfu", "name": "汉服 / 汉元素", "type": "leaf" }
+          {
+            "id": "clothing-shoes-lolita",
+            "name": "Lolita",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-shoes-softgirl",
+            "name": "软妹服 / 日常可爱风",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-shoes-hanfu",
+            "name": "汉服 / 汉元素",
+            "type": "leaf"
+          }
         ]
       },
       {
@@ -126,9 +280,21 @@
         "name": "饰品",
         "type": "folder",
         "children": [
-          { "id": "clothing-accessories-hair", "name": "发饰", "type": "leaf" },
-          { "id": "clothing-accessories-ear", "name": "耳饰", "type": "leaf" },
-          { "id": "clothing-accessories-necklace", "name": "项链 / 手链", "type": "leaf" }
+          {
+            "id": "clothing-accessories-hair",
+            "name": "发饰",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-accessories-ear",
+            "name": "耳饰",
+            "type": "leaf"
+          },
+          {
+            "id": "clothing-accessories-necklace",
+            "name": "项链 / 手链",
+            "type": "leaf"
+          }
         ]
       }
     ]
@@ -138,9 +304,21 @@
     "name": "色色",
     "type": "folder",
     "children": [
-      { "id": "adult-lingerie", "name": "情趣内衣", "type": "leaf" },
-      { "id": "adult-toys", "name": "玩具", "type": "leaf" },
-      { "id": "adult-lubes", "name": "润滑液 / 辅助用品", "type": "leaf" }
+      {
+        "id": "adult-lingerie",
+        "name": "情趣内衣",
+        "type": "leaf"
+      },
+      {
+        "id": "adult-toys",
+        "name": "玩具",
+        "type": "leaf"
+      },
+      {
+        "id": "adult-lubes",
+        "name": "润滑液 / 辅助用品",
+        "type": "leaf"
+      }
     ]
   }
 ]

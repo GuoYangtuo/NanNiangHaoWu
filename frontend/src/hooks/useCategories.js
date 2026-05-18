@@ -6,19 +6,23 @@ export const useCategories = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await getCategories();
-        setCategories(data.data || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data.data || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCategories();
+
+    const handleUpdate = () => fetchCategories();
+    window.addEventListener('categories-updated', handleUpdate);
+    return () => window.removeEventListener('categories-updated', handleUpdate);
   }, []);
 
   return { categories, loading, error };

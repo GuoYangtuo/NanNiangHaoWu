@@ -19,3 +19,11 @@ export const getAdminUsers = (params) => {
 export const updateUserStatus = (id, status) => {
   return api.put(`/admin/users/${id}/status`, { status });
 };
+
+export const getAdminContentEdits = (params) => {
+  return api.get('/admin/content-edits', { params });
+};
+
+export const verifyContentEdit = (id, status) => {
+  return api.put(`/admin/content-edits/${id}/verify`, { status });
+};

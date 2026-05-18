@@ -3,9 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const data = require('./categories.json');
+let data = require('./categories.json');
 
-const CATEGORY_TREE = data;
+let CATEGORY_TREE = data;
 
 const leafCategories = [];
 const collectLeaves = (nodes) => {
@@ -37,9 +37,19 @@ const getCategoryById = (id, nodes = CATEGORY_TREE, ancestors = []) => {
   return null;
 };
 
+const reload = () => {
+  // 清除 require 缓存，强制重新加载
+  delete require.cache[require.resolve('./categories.json')];
+  data = require('./categories.json');
+  CATEGORY_TREE = data;
+  leafCategories.length = 0;
+  collectLeaves(CATEGORY_TREE);
+};
+
 module.exports = {
   CATEGORY_TREE,
   leafCategories,
   isValidCategory,
-  getCategoryById
+  getCategoryById,
+  reload
 };

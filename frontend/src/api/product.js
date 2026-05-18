@@ -27,3 +27,7 @@ export const updateProduct = (id, formData) => {
 export const deleteProduct = (id) => {
   return api.delete(`/products/${id}`);
 };
+
+export const submitContentEdit = (category_id, new_content) => {
+  return api.post('/categories/content-edits', { category_id, new_content });
+};
