@@ -20,6 +20,7 @@ const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
+const { getRandomSchedule, setLockedIds, getLeafIds } = require('./data/categories');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -156,6 +157,40 @@ const initializeDatabase = async () => {
   }
 };
 
+// 随机锁定定时器
+let randomLockTimer = null;
+
+const startRandomLockScheduler = () => {
+  if (randomLockTimer) {
+    clearInterval(randomLockTimer);
+    randomLockTimer = null;
+  }
+  const schedule = getRandomSchedule();
+  if (!schedule.enabled) return;
+
+  const ms = schedule.period_hours * 60 * 60 * 1000;
+  randomLockTimer = setInterval(() => {
+    const currentSchedule = getRandomSchedule();
+    if (!currentSchedule.enabled) return;
+    const leafIds = getLeafIds();
+    const n = Math.min(currentSchedule.lock_count, leafIds.length);
+    const shuffled = [...leafIds].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, n);
+    setLockedIds(selected);
+    logger.info('CategoryLock', `定时随机锁定触发，锁定了 ${n} 个分类: [${selected.join(', ')}]`);
+  }, ms);
+
+  logger.info('CategoryLock', `随机锁定定时器已启动，周期 ${schedule.period_hours} 小时，每次锁定 ${schedule.lock_count} 个分类`);
+};
+
+const stopRandomLockScheduler = () => {
+  if (randomLockTimer) {
+    clearInterval(randomLockTimer);
+    randomLockTimer = null;
+    logger.info('CategoryLock', '随机锁定定时器已停止');
+  }
+};
+
 // 启动服务器
 const startServer = async () => {
   const dbReady = await initializeDatabase();
@@ -170,6 +205,7 @@ const startServer = async () => {
     logger.info('Server', `📱 前端地址: http://localhost:5173`);
     logger.info('Server', `🔌 API 地址: http://localhost:${PORT}/api`);
     logger.info('Admin', `🔐 管理员账号: admin / ${process.env.ADMIN_PASSWORD || 'admin123456'}`);
+    startRandomLockScheduler();
   });
 };
 

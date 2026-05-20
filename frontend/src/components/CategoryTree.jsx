@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { useCategories } from '../hooks/useCategories';
+import { useAuth } from '../context/AuthContext';
 
-const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories, isLast }) => {
+const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories, lockedIds, isSubscribed, isAdmin }) => {
   const isFolder = node.type === 'folder';
   const isExpanded = !!expandedFolders[node.id];
   const isSelected = selectedId === node.id;
   const hasContent = isFolder && !!node.content;
+  const isNodeLocked = lockedIds.includes(node.id);
+  const canAccess = !isNodeLocked || isSubscribed || isAdmin;
 
   const handleClick = () => {
+    if (isNodeLocked && !isSubscribed && !isAdmin) return;
     if (isFolder) {
       onToggle(node.id);
       if (hasContent) {
@@ -35,7 +39,13 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
         onClick={handleClick}
         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
           isSelected
-            ? 'bg-primary text-white shadow-sm font-medium'
+            ? canAccess
+              ? 'bg-primary text-white shadow-sm font-medium'
+              : 'bg-red-50 text-red-300 cursor-default'
+            : isNodeLocked
+            ? canAccess
+              ? 'text-text2/50 cursor-default'
+              : 'text-text2/40 cursor-default'
             : isFolder
             ? 'text-text2 hover:bg-primary-light/40 font-medium'
             : 'text-text2 hover:bg-primary-light/40'
@@ -56,6 +66,17 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
         )}
         {!isFolder && <span className="w-4 flex-shrink-0" />}
         <span>{node.name}</span>
+        {isNodeLocked && (
+          <svg
+            className="w-3.5 h-3.5 flex-shrink-0 text-amber-500 ml-auto"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        )}
       </button>
 
       {isFolder && isExpanded && node.children && (
@@ -70,7 +91,9 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
               expandedFolders={expandedFolders}
               onToggle={onToggle}
               categories={categories}
-              isLast={idx === node.children.length - 1}
+              lockedIds={lockedIds}
+              isSubscribed={isSubscribed}
+              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -80,8 +103,11 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
 };
 
 const CategoryTree = ({ selectedId, onSelect }) => {
-  const { categories, loading, error } = useCategories();
+  const { categories, lockedIds, loading, error } = useCategories();
+  const { user, isAdmin } = useAuth();
   const [expandedFolders, setExpandedFolders] = useState({});
+
+  const isSubscribed = !!(user && (user.is_subscribed || user.role === 'admin'));
 
   const toggleFolder = (folderId) => {
     setExpandedFolders((prev) => ({
@@ -128,6 +154,9 @@ const CategoryTree = ({ selectedId, onSelect }) => {
             expandedFolders={expandedFolders}
             onToggle={toggleFolder}
             categories={categories}
+            lockedIds={lockedIds}
+            isSubscribed={isSubscribed}
+            isAdmin={isAdmin}
           />
         ))}
       </div>

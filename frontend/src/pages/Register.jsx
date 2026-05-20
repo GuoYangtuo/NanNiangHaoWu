@@ -87,7 +87,7 @@ const Register = () => {
             className="w-16 h-16 mx-auto rounded-2xl object-cover mb-4"
           />
           <h1 className="text-2xl font-bold text-text1">{SITE_NAME}</h1>
-          <p className="text-text2 mt-1">加入社区，一起分享变美经验吧~</p>
+          <p className="text-text2 mt-1">加入社区，一起分享女装经验吧~</p>
         </div>
 
         {/* 注册表单 */}

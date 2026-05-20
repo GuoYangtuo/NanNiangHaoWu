@@ -356,7 +356,8 @@ router.put('/content-edits/:id/verify', [
       // 将新内容写入 categories.json
       const categoriesPath = path.join(__dirname, '..', 'data', 'categories.json');
       const rawData = fs.readFileSync(categoriesPath, 'utf-8');
-      let categories = JSON.parse(rawData);
+      let data = JSON.parse(rawData);
+      let categories = data._categories;
 
       const updateContent = (nodes) => {
         for (const node of nodes) {
@@ -375,8 +376,9 @@ router.put('/content-edits/:id/verify', [
       if (!updateContent(categories)) {
         return notFound(res, '未找到对应分类，无法应用更改');
       }
+      data._categories = categories;
 
-      fs.writeFileSync(categoriesPath, JSON.stringify(categories, null, 2), 'utf-8');
+      fs.writeFileSync(categoriesPath, JSON.stringify(data, null, 2), 'utf-8');
       reloadCategories();
       logger.info('Admin', `文案改进已应用，分类ID: ${edit.category_id}`);
     }

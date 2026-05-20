@@ -1,9 +1,9 @@
-'user strict';
+'use strict';
 
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { CATEGORY_TREE, isValidCategory, reload: reloadCategories } = require('../data/categories');
-const { success, badRequest, notFound, serverError, unauthorized } = require('../utils/response');
+const { CATEGORY_TREE, isValidCategory, isLocked, getLockedIds, getRandomSchedule, setLockedIds, setRandomSchedule, getLeafIds, reload: reloadCategories } = require('../data/categories');
+const { success, badRequest, notFound, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
 const { authMiddleware } = require('../middlewares/auth');
 const fs = require('fs');
@@ -14,9 +14,25 @@ const router = express.Router();
 // GET /api/categories - 获取分类树（来自 JSON 配置）
 router.get('/', async (req, res) => {
   try {
-    return success(res, CATEGORY_TREE);
+    return success(res, {
+      categories: CATEGORY_TREE,
+      lockedIds: getLockedIds()
+    });
   } catch (err) {
     logger.error('Categories', '获取分类列表失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// GET /api/categories/lock-status - 获取当前锁定状态（公开，无需认证）
+router.get('/lock-status', async (req, res) => {
+  try {
+    return success(res, {
+      lockedIds: getLockedIds(),
+      randomSchedule: getRandomSchedule()
+    });
+  } catch (err) {
+    logger.error('Categories', '获取锁定状态失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });
@@ -26,11 +42,109 @@ router.post('/', async (req, res) => {
   return badRequest(res, '分类管理暂不支持，请通过修改 backend/data/categories.json 来更新分类');
 });
 
+// --- Admin lock management routes (mounted here, guarded by adminMiddleware) ---
+
+// GET /api/categories/admin/lock-config - 获取完整锁定配置
+router.get('/admin/lock-config', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '需要管理员权限' });
+    }
+    return success(res, {
+      lockedIds: getLockedIds(),
+      randomSchedule: getRandomSchedule(),
+      leafIds: getLeafIds()
+    });
+  } catch (err) {
+    logger.error('CategoryLock', '获取锁定配置失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// PUT /api/categories/admin/lock - 手动设置锁定分类
+router.put('/admin/lock', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '需要管理员权限' });
+    }
+    const { lockedIds } = req.body;
+    if (!Array.isArray(lockedIds)) {
+      return badRequest(res, 'lockedIds 必须是数组');
+    }
+    // Validate: all IDs must be real categories
+    const findNode = (nodes, id) => {
+      for (const node of nodes) {
+        if (node.id === id) return node;
+        if (node.children) {
+          const found = findNode(node.children, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    for (const id of lockedIds) {
+      if (!findNode(CATEGORY_TREE, id)) {
+        return badRequest(res, `分类 ID "${id}" 不存在`);
+      }
+    }
+    setLockedIds(lockedIds);
+    logger.info('CategoryLock', `管理员 ${req.user.username} 更新了手动锁定分类: [${lockedIds.join(', ')}]`);
+    return success(res, { lockedIds: getLockedIds() }, '锁定分类已更新');
+  } catch (err) {
+    logger.error('CategoryLock', '更新锁定分类失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// POST /api/categories/admin/lock/randomize - 手动触发一次随机锁定
+router.post('/admin/lock/randomize', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '需要管理员权限' });
+    }
+    const { count } = req.body;
+    const leafIds = getLeafIds();
+    if (typeof count !== 'number' || count <= 0) {
+      return badRequest(res, 'count 必须是正整数');
+    }
+    const n = Math.min(count, leafIds.length);
+    const shuffled = [...leafIds].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, n);
+    setLockedIds(selected);
+    logger.info('CategoryLock', `管理员 ${req.user.username} 手动触发随机锁定，选择了 ${n} 个分类: [${selected.join(', ')}]`);
+    return success(res, { lockedIds: getLockedIds() }, `已随机锁定 ${n} 个分类`);
+  } catch (err) {
+    logger.error('CategoryLock', '随机锁定失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// PUT /api/categories/admin/random-schedule - 更新定时随机锁定配置
+router.put('/admin/random-schedule', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '需要管理员权限' });
+    }
+    const { enabled, period_hours, lock_count } = req.body;
+    const schedule = {};
+    if (typeof enabled === 'boolean') schedule.enabled = enabled;
+    if (typeof period_hours === 'number' && period_hours > 0) schedule.period_hours = period_hours;
+    if (typeof lock_count === 'number' && lock_count > 0) schedule.lock_count = lock_count;
+    setRandomSchedule(schedule);
+    logger.info('CategoryLock', `管理员 ${req.user.username} 更新了随机锁定配置: ${JSON.stringify(schedule)}`);
+    return success(res, { randomSchedule: getRandomSchedule() }, '定时随机锁定配置已更新');
+  } catch (err) {
+    logger.error('CategoryLock', '更新随机锁定配置失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
 // Apply new content to categories.json (used for both admin immediate-apply and admin review approval)
 const applyContentToJson = (categoryId, newContent) => {
   const categoriesPath = path.join(__dirname, '..', 'data', 'categories.json');
   const rawData = fs.readFileSync(categoriesPath, 'utf-8');
-  let categories = JSON.parse(rawData);
+  let data = JSON.parse(rawData);
+  let categories = data._categories;
 
   const updateContent = (nodes) => {
     for (const node of nodes) {
@@ -47,8 +161,9 @@ const applyContentToJson = (categoryId, newContent) => {
   };
 
   if (!updateContent(categories)) return false;
+  data._categories = categories;
 
-  fs.writeFileSync(categoriesPath, JSON.stringify(categories, null, 2), 'utf-8');
+  fs.writeFileSync(categoriesPath, JSON.stringify(data, null, 2), 'utf-8');
   reloadCategories();
   return true;
 };

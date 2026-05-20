@@ -36,14 +36,15 @@ const findLeafById = (nodes, id) => {
 };
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const { categories } = useCategories();
+  const { categories, lockedIds } = useCategories();
+  const isSubscribed = !!(user && (user.is_subscribed || user.role === 'admin'));
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -99,6 +100,7 @@ const Home = () => {
   };
 
   const handleCategorySelect = (categoryId) => {
+    if (categoryId && lockedIds.includes(categoryId) && !isSubscribed && !isAdmin) return;
     setSelectedCategory(categoryId);
   };
 
@@ -111,8 +113,6 @@ const Home = () => {
     setEditError('');
     setEditModalOpen(true);
   };
-
-  const isAdmin = user?.role === 'admin';
 
   const handleEditProduct = useCallback((product) => {
     setEditModalProduct(product);
@@ -183,17 +183,35 @@ const Home = () => {
         <div className="md:hidden mb-4">
           <select
             value={selectedCategory || ''}
-            onChange={(e) => setSelectedCategory(e.target.value || null)}
+            onChange={(e) => {
+              const val = e.target.value || null;
+              if (val && lockedIds.includes(val) && !isSubscribed && !isAdmin) return;
+              setSelectedCategory(val);
+            }}
             className="w-full px-4 py-2.5 bg-white border border-warm-border rounded-lg text-sm"
           >
             <option value="">全部好物</option>
-            {flatCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.label}
-              </option>
-            ))}
+            {flatCategories.map((cat) => {
+              const locked = lockedIds.includes(cat.id);
+              const disabled = locked && !isSubscribed && !isAdmin;
+              return (
+                <option key={cat.id} value={cat.id} disabled={disabled}>
+                  {cat.label}{locked ? ' 🔒' : ''}
+                </option>
+              );
+            })}
           </select>
         </div>
+
+        {/* 锁定提示 */}
+        {selectedCategory && lockedIds.includes(selectedCategory) && !isSubscribed && !isAdmin && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            该分类为会员专属内容，付费订阅后即可查看
+          </div>
+        )}
 
         {/* 页面标题 — markdown 模式下隐藏 */}
         {!selectedFolderContent && (
@@ -208,7 +226,25 @@ const Home = () => {
         )}
 
         {/* 主内容区域 */}
-        {selectedFolderContent ? (
+        {selectedCategory && lockedIds.includes(selectedCategory) && !isSubscribed && !isAdmin ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center mb-4">
+              <svg className="w-10 h-10 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-text1 mb-2">会员专属内容</h2>
+            <p className="text-text2 text-sm mb-6 max-w-sm">
+              此分类下的内容仅对付费会员开放，付费订阅后可查看全部好物推荐和经验分享。
+            </p>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="px-6 py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              登录 / 订阅
+            </button>
+          </div>
+        ) : selectedFolderContent ? (
           <div className="bg-white rounded-xl border border-warm-border p-6 md:p-8 shadow-sm relative">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}

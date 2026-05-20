@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getAdminProducts, verifyProduct, deleteAdminProduct } from '../api/admin';
 import { getAdminUsers, updateUserStatus } from '../api/admin';
 import { getAdminContentEdits, verifyContentEdit } from '../api/admin';
+import { getAdminLockConfig, updateAdminLock, randomizeAdminLock, updateAdminRandomSchedule } from '../api/category';
 import { STATUS_COLORS } from '../utils/constants';
 import ProductEditModal from '../components/ProductEditModal';
 
@@ -15,11 +16,20 @@ const Admin = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [editModalProduct, setEditModalProduct] = useState(null);
 
+  // 锁定管理状态
+  const [lockConfig, setLockConfig] = useState({ lockedIds: [], randomSchedule: { enabled: false, period_hours: 24, lock_count: 3 }, leafIds: [] });
+  const [lockLoading, setLockLoading] = useState(false);
+  const [lockSaving, setLockSaving] = useState(false);
+  const [randomPeriodHours, setRandomPeriodHours] = useState(24);
+  const [randomLockCount, setRandomLockCount] = useState(3);
+  const [randomEnabled, setRandomEnabled] = useState(false);
+
   const tabs = [
     { id: 'review', label: '商品审核', badge: null },
     { id: 'users', label: '用户管理', badge: null },
     { id: 'products', label: '商品管理', badge: null },
-    { id: 'content-edits', label: '文案改进', badge: null }
+    { id: 'content-edits', label: '文案改进', badge: null },
+    { id: 'category-lock', label: '类目锁定', badge: null }
   ];
 
   // 获取待审核商品
@@ -74,6 +84,27 @@ const Admin = () => {
     }
   };
 
+  // 获取锁定配置
+  const fetchLockConfig = async () => {
+    setLockLoading(true);
+    try {
+      const res = await getAdminLockConfig();
+      const data = res.data;
+      setLockConfig({
+        lockedIds: data.lockedIds || [],
+        randomSchedule: data.randomSchedule || { enabled: false, period_hours: 24, lock_count: 3 },
+        leafIds: data.leafIds || []
+      });
+      setRandomPeriodHours(data.randomSchedule?.period_hours || 24);
+      setRandomLockCount(data.randomSchedule?.lock_count || 3);
+      setRandomEnabled(data.randomSchedule?.enabled || false);
+    } catch (err) {
+      console.error('获取锁定配置失败:', err);
+    } finally {
+      setLockLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'review') {
       fetchPendingProducts();
@@ -83,6 +114,8 @@ const Admin = () => {
       fetchAllProducts();
     } else if (activeTab === 'content-edits') {
       fetchContentEdits();
+    } else if (activeTab === 'category-lock') {
+      fetchLockConfig();
     }
   }, [activeTab]);
 
@@ -159,6 +192,64 @@ const Admin = () => {
       alert(err.message || '操作失败');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  // 切换类目锁定状态
+  const toggleCategoryLock = (categoryId) => {
+    setLockConfig((prev) => {
+      const currentlyLocked = prev.lockedIds.includes(categoryId);
+      const newLockedIds = currentlyLocked
+        ? prev.lockedIds.filter((id) => id !== categoryId)
+        : [...prev.lockedIds, categoryId];
+      return { ...prev, lockedIds: newLockedIds };
+    });
+  };
+
+  // 保存手动锁定
+  const handleSaveManualLock = async () => {
+    setLockSaving(true);
+    try {
+      await updateAdminLock(lockConfig.lockedIds);
+      window.dispatchEvent(new Event('categories-updated'));
+      alert('手动锁定已保存');
+    } catch (err) {
+      alert(err.message || '保存失败');
+    } finally {
+      setLockSaving(false);
+    }
+  };
+
+  // 手动触发随机锁定
+  const handleRandomize = async () => {
+    if (!confirm(`确定要手动随机锁定 ${randomLockCount} 个类目吗？`)) return;
+    setLockSaving(true);
+    try {
+      await randomizeAdminLock(randomLockCount);
+      window.dispatchEvent(new Event('categories-updated'));
+      await fetchLockConfig();
+      alert(`已随机锁定 ${randomLockCount} 个类目`);
+    } catch (err) {
+      alert(err.message || '操作失败');
+    } finally {
+      setLockSaving(false);
+    }
+  };
+
+  // 保存定时随机锁定配置
+  const handleSaveRandomSchedule = async () => {
+    setLockSaving(true);
+    try {
+      await updateAdminRandomSchedule({
+        enabled: randomEnabled,
+        period_hours: randomPeriodHours,
+        lock_count: randomLockCount
+      });
+      alert('定时随机锁定配置已保存');
+    } catch (err) {
+      alert(err.message || '保存失败');
+    } finally {
+      setLockSaving(false);
     }
   };
 
@@ -496,6 +587,146 @@ const Admin = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 类目锁定 Tab */}
+            {activeTab === 'category-lock' && (
+              <div>
+                {lockLoading ? (
+                  <div className="flex justify-center py-16">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-text2">加载中...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* 手动锁定 */}
+                    <div className="bg-white rounded-xl shadow-card p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h3 className="text-base font-bold text-text1">手动锁定</h3>
+                          <p className="text-xs text-text2 mt-1">勾选要锁定的分类，被锁定的分类只有付费会员可见</p>
+                        </div>
+                        <button
+                          onClick={handleSaveManualLock}
+                          disabled={lockSaving}
+                          className="px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                        >
+                          {lockSaving ? '保存中...' : '保存设置'}
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-80 overflow-y-auto">
+                        {lockConfig.leafIds.map((leafId) => {
+                          const isLocked = lockConfig.lockedIds.includes(leafId);
+                          return (
+                            <button
+                              key={leafId}
+                              onClick={() => toggleCategoryLock(leafId)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${
+                                isLocked
+                                  ? 'bg-amber-50 border-amber-300 text-amber-700'
+                                  : 'bg-warm-bg border-warm-border text-text2 hover:border-primary'
+                              }`}
+                            >
+                              <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                                isLocked ? 'bg-amber-500 border-amber-500' : 'border-gray-300'
+                              }`}>
+                                {isLocked && (
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </span>
+                              <span className="line-clamp-1 text-left">{leafId}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-text2 mt-3">
+                        当前已锁定 <span className="font-semibold text-amber-600">{lockConfig.lockedIds.length}</span> 个分类
+                      </p>
+                    </div>
+
+                    {/* 定时随机锁定 */}
+                    <div className="bg-white rounded-xl shadow-card p-6">
+                      <div className="mb-4">
+                        <h3 className="text-base font-bold text-text1">定时随机锁定</h3>
+                        <p className="text-xs text-text2 mt-1">每经过指定周期，自动清除上次的锁定，并在 leaf 类目中随机挑选指定数量的分类进行锁定</p>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-4">
+                        {/* 开启/关闭 */}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <div
+                            className={`relative w-12 h-6 rounded-full transition-colors ${randomEnabled ? 'bg-primary' : 'bg-gray-300'}`}
+                            onClick={() => setRandomEnabled(!randomEnabled)}
+                          >
+                            <div
+                              className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                randomEnabled ? 'translate-x-7' : 'translate-x-1'
+                              }`}
+                            />
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={randomEnabled}
+                            onChange={(e) => setRandomEnabled(e.target.checked)}
+                            className="sr-only"
+                          />
+                          <span className="text-sm text-text1 font-medium">{randomEnabled ? '已开启' : '已关闭'}</span>
+                        </label>
+
+                        {/* 周期 */}
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-text2 whitespace-nowrap">随机周期：</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={168}
+                            value={randomPeriodHours}
+                            onChange={(e) => setRandomPeriodHours(parseInt(e.target.value) || 1)}
+                            className="w-20 px-3 py-1.5 border border-warm-border rounded-lg text-sm text-text1 focus:ring-2 focus:ring-primary/20"
+                          />
+                          <span className="text-sm text-text2">小时</span>
+                        </div>
+
+                        {/* 数量 */}
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-text2 whitespace-nowrap">锁定数量：</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={lockConfig.leafIds.length}
+                            value={randomLockCount}
+                            onChange={(e) => setRandomLockCount(parseInt(e.target.value) || 1)}
+                            className="w-20 px-3 py-1.5 border border-warm-border rounded-lg text-sm text-text1 focus:ring-2 focus:ring-primary/20"
+                          />
+                          <span className="text-sm text-text2">个</span>
+                        </div>
+
+                        <button
+                          onClick={handleSaveRandomSchedule}
+                          disabled={lockSaving}
+                          className="px-4 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                        >
+                          {lockSaving ? '保存中...' : '保存配置'}
+                        </button>
+                      </div>
+
+                      <div className="border-t border-warm-border pt-4 mt-2">
+                        <p className="text-xs text-text2 mb-3">定时随机锁定开启后，将每隔 <span className="font-semibold">{randomPeriodHours}</span> 小时自动随机锁定 <span className="font-semibold">{randomLockCount}</span> 个 leaf 类目。</p>
+                        <button
+                          onClick={handleRandomize}
+                          disabled={lockSaving}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                        >
+                          {lockSaving ? '处理中...' : '立即随机锁定一次'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

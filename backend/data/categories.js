@@ -3,9 +3,22 @@
 const fs = require('fs');
 const path = require('path');
 
-let data = require('./categories.json');
+const categoriesPath = path.join(__dirname, 'categories.json');
 
-let CATEGORY_TREE = data;
+let meta = { locked_category_ids: [], random_schedule: { enabled: false, period_hours: 24, lock_count: 3 } };
+let CATEGORY_TREE = [];
+
+const loadData = () => {
+  const rawData = fs.readFileSync(categoriesPath, 'utf-8');
+  const data = JSON.parse(rawData);
+  meta = {
+    locked_category_ids: Array.isArray(data.locked_category_ids) ? data.locked_category_ids : [],
+    random_schedule: data.random_schedule || { enabled: false, period_hours: 24, lock_count: 3 }
+  };
+  CATEGORY_TREE = data._categories || [];
+};
+
+loadData();
 
 const leafCategories = [];
 const collectLeaves = (nodes) => {
@@ -37,12 +50,35 @@ const getCategoryById = (id, nodes = CATEGORY_TREE, ancestors = []) => {
   return null;
 };
 
+const isLocked = (id) => meta.locked_category_ids.includes(id);
+
+const getLockedIds = () => [...meta.locked_category_ids];
+
+const getRandomSchedule = () => ({ ...meta.random_schedule });
+
+const saveLockData = () => {
+  const rawData = fs.readFileSync(categoriesPath, 'utf-8');
+  const data = JSON.parse(rawData);
+  data.locked_category_ids = meta.locked_category_ids;
+  data.random_schedule = meta.random_schedule;
+  fs.writeFileSync(categoriesPath, JSON.stringify(data, null, 2), 'utf-8');
+};
+
+const setLockedIds = (ids) => {
+  meta.locked_category_ids = ids;
+  saveLockData();
+};
+
+const setRandomSchedule = (schedule) => {
+  meta.random_schedule = { ...meta.random_schedule, ...schedule };
+  saveLockData();
+};
+
+const getLeafIds = () => [...leafCategories];
+
 const reload = () => {
-  // 清除 require 缓存，强制重新加载
-  delete require.cache[require.resolve('./categories.json')];
-  data = require('./categories.json');
-  CATEGORY_TREE = data;
   leafCategories.length = 0;
+  loadData();
   collectLeaves(CATEGORY_TREE);
 };
 
@@ -51,5 +87,11 @@ module.exports = {
   leafCategories,
   isValidCategory,
   getCategoryById,
+  isLocked,
+  getLockedIds,
+  getRandomSchedule,
+  setLockedIds,
+  setRandomSchedule,
+  getLeafIds,
   reload
 };

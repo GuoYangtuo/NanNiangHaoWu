@@ -3,13 +3,15 @@ import { getCategories } from '../api/category';
 
 export const useCategories = () => {
   const [categories, setCategories] = useState([]);
+  const [lockedIds, setLockedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchCategories = async () => {
     try {
       const data = await getCategories();
-      setCategories(data.data || []);
+      setCategories(data.data.categories || []);
+      setLockedIds(data.data.lockedIds || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -25,5 +27,5 @@ export const useCategories = () => {
     return () => window.removeEventListener('categories-updated', handleUpdate);
   }, []);
 
-  return { categories, loading, error };
+  return { categories, lockedIds, loading, error };
 };
