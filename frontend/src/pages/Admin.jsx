@@ -4,6 +4,7 @@ import { getAdminProducts, verifyProduct, deleteAdminProduct } from '../api/admi
 import { getAdminUsers, updateUserStatus } from '../api/admin';
 import { getAdminContentEdits, verifyContentEdit } from '../api/admin';
 import { getAdminLockConfig, updateAdminLock, randomizeAdminLock, updateAdminRandomSchedule } from '../api/category';
+import CategoryLockTree from '../components/CategoryLockTree';
 import { STATUS_COLORS } from '../utils/constants';
 import ProductEditModal from '../components/ProductEditModal';
 
@@ -193,17 +194,6 @@ const Admin = () => {
     } finally {
       setActionLoading(null);
     }
-  };
-
-  // 切换类目锁定状态
-  const toggleCategoryLock = (categoryId) => {
-    setLockConfig((prev) => {
-      const currentlyLocked = prev.lockedIds.includes(categoryId);
-      const newLockedIds = currentlyLocked
-        ? prev.lockedIds.filter((id) => id !== categoryId)
-        : [...prev.lockedIds, categoryId];
-      return { ...prev, lockedIds: newLockedIds };
-    });
   };
 
   // 保存手动锁定
@@ -619,35 +609,16 @@ const Admin = () => {
                           {lockSaving ? '保存中...' : '保存设置'}
                         </button>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-80 overflow-y-auto">
-                        {lockConfig.leafIds.map((leafId) => {
-                          const isLocked = lockConfig.lockedIds.includes(leafId);
-                          return (
-                            <button
-                              key={leafId}
-                              onClick={() => toggleCategoryLock(leafId)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${
-                                isLocked
-                                  ? 'bg-amber-50 border-amber-300 text-amber-700'
-                                  : 'bg-warm-bg border-warm-border text-text2 hover:border-primary'
-                              }`}
-                            >
-                              <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                                isLocked ? 'bg-amber-500 border-amber-500' : 'border-gray-300'
-                              }`}>
-                                {isLocked && (
-                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </span>
-                              <span className="line-clamp-1 text-left">{leafId}</span>
-                            </button>
-                          );
-                        })}
+                      <div className="overflow-y-auto">
+                        <CategoryLockTree
+                          lockedIds={lockConfig.lockedIds}
+                          onLockedIdsChange={(newLockedIds) =>
+                            setLockConfig((prev) => ({ ...prev, lockedIds: newLockedIds }))
+                          }
+                        />
                       </div>
                       <p className="text-xs text-text2 mt-3">
-                        当前已锁定 <span className="font-semibold text-amber-600">{lockConfig.lockedIds.length}</span> 个分类
+                        当前已锁定 <span className="font-semibold text-amber-600">{lockConfig.lockedIds.length}</span> 个分类（仅 leaf 类目可被锁定）
                       </p>
                     </div>
 
@@ -659,10 +630,9 @@ const Admin = () => {
                       </div>
                       <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-4">
                         {/* 开启/关闭 */}
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
                           <div
                             className={`relative w-12 h-6 rounded-full transition-colors ${randomEnabled ? 'bg-primary' : 'bg-gray-300'}`}
-                            onClick={() => setRandomEnabled(!randomEnabled)}
                           >
                             <div
                               className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${

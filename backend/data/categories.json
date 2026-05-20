@@ -1,9 +1,15 @@
 {
   "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
-  "locked_category_ids": [],
+  "locked_category_ids": [
+    "nursing-mouth-toothbrush",
+    "clothing-accessories-hair",
+    "nursing-mouth-toothpaste",
+    "clothing-socks-knee",
+    "makeup-face-nose"
+  ],
   "random_schedule": {
-    "enabled": false,
-    "period_hours": 24,
+    "enabled": true,
+    "period_hours": 1,
     "lock_count": 5
   },
   "_categories": [
@@ -11,7 +17,7 @@
       "id": "folder-nursing",
       "name": "护理",
       "type": "folder",
-      "content": "# 护理指南\n\n身体护理的核心目标：皮肤变白嫩，体型变好看\n\n### 新手护肤三部曲：清洁、保湿、防晒\n\n皮肤包括脸部，手部，身体其它部位 三部分。\n\n### 体型调整包括变瘦，体态调整等",
+      "content": "# 护理指南\n\n在互联网上所看到的美貌，50%来自后天护理，40%来自化妆美颜，所以就算没有10%的天生，也可以通过努力变得比90%的人更好看。加油！可爱的小南娘们！！\n\n身体护理的核心目标：皮肤变白嫩，体型变好看\n\n### 新手护肤三部曲：清洁、保湿、防晒\n\n- 做好这三件事，能解决80%的皮肤问题，让你获得比较光滑白皙水嫩的肌肤\n- 皮肤包括脸部，手部，身体其它部位 三部分。\n\n（护肤的其它部分包括美白，去痘/黑头/毳毛，去角质，处理敏感泛红，抗衰老，皱纹等）\n\n### 毛发管理\n\n小南娘一定一定要做好毛发管理！！就算您不打算长期脱毛，或作为日常习惯，至少在拍照片或者穿裙子的时候一定请先脱毛！会好看非常多！\n\n- 主要部位包括腿部，腋毛、手臂、以及隐私部位\n- 主要方法包括物理刮掉，化学脱毛，激光脱毛\n\n### 体型调整包括变瘦，体态调整等\n\n- 瘦身首推游泳，瑜伽，拉伸\n- 体态问题包括，腿型不好（又包括肌肉腿或者骨头导致的）脊椎问题（驼背，脊柱侧弯，颈前伸）等",
       "children": [
         {
           "id": "nursing-face",
