@@ -14,12 +14,14 @@ const { createDatabaseIfNotExists } = dbModule;
 const User = require('./models/User');
 const Product = require('./models/Product');
 const ContentEdit = require('./models/ContentEdit');
+const Favorite = require('./models/Favorite');
 const logger = require('./utils/logger');
 
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
+const favoritesRoutes = require('./routes/favorites');
 const { getRandomSchedule, setLockedIds, getLeafIds } = require('./data/categories');
 
 const app = express();
@@ -51,6 +53,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -88,6 +91,9 @@ app.use((err, req, res, next) => {
 const setupAssociations = () => {
   Product.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
   ContentEdit.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+  Favorite.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+  Favorite.belongsTo(Product, { as: 'product', foreignKey: 'product_id' });
+  Product.hasMany(Favorite, { as: 'favorites', foreignKey: 'product_id' });
 };
 
 // 初始化数据库并创建管理员账号

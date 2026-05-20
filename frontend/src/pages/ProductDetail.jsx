@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../api/product';
+import { addFavorite, removeFavorite } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 import ProductEditModal from '../components/ProductEditModal';
 
@@ -13,6 +14,7 @@ const ProductDetail = () => {
   const [error, setError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [editModalProduct, setEditModalProduct] = useState(null);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   const isAdmin = user?.role === 'admin';
 
@@ -35,9 +37,42 @@ const ProductDetail = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (product && user) {
+      import('../api/favorites').then(({ checkFavorites }) => {
+        checkFavorites([product.id])
+          .then(res => setIsFavorited(res.data.favorite_ids.includes(product.id)))
+          .catch(() => {});
+      });
+    } else if (!user) {
+      setIsFavorited(false);
+    }
+  }, [product, user]);
+
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    // 乐观更新：先切换状态
+    const newState = !isFavorited;
+    setIsFavorited(newState);
+    try {
+      if (newState) {
+        await addFavorite(product.id);
+      } else {
+        await removeFavorite(product.id);
+      }
+    } catch (err) {
+      // 失败则恢复原状态
+      setIsFavorited(!newState);
+      console.error('收藏操作失败:', err);
+    }
   };
 
   if (loading) {
@@ -194,6 +229,28 @@ const ProductDetail = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                   </svg>
                   编辑
+                </button>
+              )}
+              {user && (
+                <button
+                  onClick={handleFavoriteToggle}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                    isFavorited
+                      ? 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'
+                      : 'bg-white border-warm-border text-text2 hover:border-red-300 hover:text-red-400'
+                  }`}
+                  title={isFavorited ? '取消收藏' : '收藏'}
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill={isFavorited ? 'currentColor' : 'none'}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  {isFavorited ? '已收藏' : '收藏'}
                 </button>
               )}
             </div>

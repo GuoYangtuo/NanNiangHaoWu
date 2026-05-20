@@ -275,7 +275,7 @@ const Upload = () => {
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="推荐的是什么好物？"
+              placeholder="建议直接粘贴电商平台商品名称"
               maxLength={200}
               className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-colors ${
                 fieldErrors.name ? 'border-red-400' : 'border-warm-border'
@@ -344,7 +344,7 @@ const Upload = () => {
               {loading ? '提交中...' : '提交审核'}
             </button>
             <p className="mt-3 text-xs text-text2/60 text-center">
-              提交后需要管理员审核，通过后才会展示在首页
+              右上角可查看审核状态，通过后才会展示在首页
             </p>
           </div>
         </div>

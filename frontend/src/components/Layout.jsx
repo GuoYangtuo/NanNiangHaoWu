@@ -1,13 +1,17 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { SITE_NAME } from '../utils/constants';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { getFavorites, removeFavorite } from '../api/favorites';
 
 const Layout = () => {
   const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [favoritesModalOpen, setFavoritesModalOpen] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
   const hideTimer = useRef(null);
 
   const handleMouseEnter = () => {
@@ -28,6 +32,51 @@ const Layout = () => {
   const handleMenuItemClick = () => {
     setMenuOpen(false);
   };
+
+  const openFavoritesModal = () => {
+    setMenuOpen(false);
+    setFavoritesModalOpen(true);
+    fetchFavorites();
+  };
+
+  const fetchFavorites = async () => {
+    setFavoritesLoading(true);
+    try {
+      const res = await getFavorites({ page: 1, limit: 100 });
+      setFavorites(res.data.favorites);
+    } catch (err) {
+      console.error('获取收藏列表失败:', err);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  };
+
+  const handleRemoveFavorite = async (e, productId, favoriteId) => {
+    e.stopPropagation();
+    // 乐观更新：先从列表移除
+    setFavorites(prev => prev.filter(f => f.product_id !== productId));
+    try {
+      await removeFavorite(productId);
+    } catch (err) {
+      // 失败则恢复
+      fetchFavorites();
+      console.error('取消收藏失败:', err);
+    }
+  };
+
+  const handleRowClick = (productId) => {
+    setFavoritesModalOpen(false);
+    navigate(`/product/${productId}`);
+  };
+
+  useEffect(() => {
+    if (!favoritesModalOpen) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') setFavoritesModalOpen(false);
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [favoritesModalOpen]);
 
   return (
     <div className="min-h-screen bg-warm-bg">
@@ -82,6 +131,20 @@ const Layout = () => {
                           </svg>
                           上传好物
                         </Link>
+
+                        <button
+                          onClick={openFavoritesModal}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors w-full text-left ${
+                            location.pathname === '/favorites'
+                              ? 'bg-primary-light/50 text-primary-dark font-medium'
+                              : 'text-text2 hover:bg-primary-light/50 hover:text-primary'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                          </svg>
+                          我的收藏
+                        </button>
 
                         {isAdmin && (
                           <Link
@@ -156,6 +219,85 @@ const Layout = () => {
           </div>
         </div>
       </footer>
+
+      {/* 收藏弹窗 */}
+      {favoritesModalOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40"
+          onClick={(e) => { if (e.target === e.currentTarget) setFavoritesModalOpen(false); }}
+        >
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[70vh] flex flex-col">
+            {/* 弹窗标题 */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-warm-border flex-shrink-0">
+              <h2 className="text-base font-bold text-text1">我收藏的好物</h2>
+              <button
+                onClick={() => setFavoritesModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-warm-bg text-text2 hover:text-text1 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* 弹窗内容 */}
+            <div className="flex-1 overflow-y-auto">
+              {favoritesLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : favorites.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+                  <svg className="w-12 h-12 text-warm-border mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                  <p className="text-sm text-text2">还没有收藏任何好物</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-warm-border">
+                  {favorites.map((fav) => {
+                    const p = fav.product;
+                    if (!p) return null;
+                    const firstImage = p.images && p.images.length > 0
+                      ? p.images[0]
+                      : 'https://via.placeholder.com/64/F0E8E4/E879A9?text=N/A';
+                    return (
+                      <li
+                        key={fav.id}
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-warm-bg/60 cursor-pointer transition-colors group"
+                        onClick={() => handleRowClick(p.id)}
+                      >
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-warm-bg flex-shrink-0">
+                          <img
+                            src={firstImage}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/64/F0E8E4/E879A9?text=N/A';
+                            }}
+                          />
+                        </div>
+                        <p className="flex-1 text-sm font-medium text-text1 line-clamp-2 group-hover:text-primary transition-colors">
+                          {p.name}
+                        </p>
+                        <button
+                          onClick={(e) => handleRemoveFavorite(e, p.id, fav.id)}
+                          className="w-7 h-7 flex items-center justify-center rounded-full text-text2 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                          title="取消收藏"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
