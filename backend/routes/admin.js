@@ -98,6 +98,38 @@ router.put('/products/:id/verify', [
 
     await product.update({ status });
 
+    // 当商品被审核通过时，统计该用户已通过的商品数，每3个给一个月会员
+    if (status === 'approved') {
+      const APPROVED_THRESHOLD = 3;
+      const MEMBER_DURATION_DAYS = 30;
+
+      const approvedCount = await Product.count({
+        where: { user_id: product.user_id, status: 'approved' }
+      });
+
+      const owner = await User.findByPk(product.user_id);
+      if (owner && owner.role !== 'admin') {
+        // 只有累计通过数是3的倍数时才增加会员时长
+        if (approvedCount % APPROVED_THRESHOLD === 0) {
+          const now = new Date();
+          let newExpiresAt;
+
+          if (owner.member_expires_at && new Date(owner.member_expires_at) > now) {
+            newExpiresAt = new Date(owner.member_expires_at);
+          } else {
+            newExpiresAt = new Date(now);
+          }
+          newExpiresAt.setDate(newExpiresAt.getDate() + MEMBER_DURATION_DAYS);
+
+          await owner.update({ member_expires_at: newExpiresAt });
+          logger.info('Admin', `用户 ${owner.username} 累计第 ${approvedCount} 个商品通过审核，获得一个月会员，到期: ${newExpiresAt.toISOString()}`);
+        } else {
+          const remaining = APPROVED_THRESHOLD - (approvedCount % APPROVED_THRESHOLD);
+          logger.info('Admin', `用户 ${owner.username} 累计通过 ${approvedCount} 个商品，还需 ${remaining} 个可获一个月会员`);
+        }
+      }
+    }
+
     logger.info('Admin', `管理员审核商品: ${product.name} -> ${status}`);
 
     return success(res, { id: product.id, status }, `商品已${status === 'approved' ? '通过' : '拒绝'}`);

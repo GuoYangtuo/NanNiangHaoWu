@@ -94,7 +94,10 @@ router.post('/register', registerRules, async (req, res) => {
         email: user.email,
         role: user.role,
         is_subscribed: user.is_subscribed,
-        subscription_expires_at: user.subscription_expires_at
+        subscription_expires_at: user.subscription_expires_at,
+        member_expires_at: user.member_expires_at,
+        is_active_member: user.role === 'admin' || user.is_subscribed ||
+          (user.member_expires_at && new Date(user.member_expires_at) > new Date())
       }
     }, '注册成功');
   } catch (err) {
@@ -151,7 +154,10 @@ router.post('/login', loginRules, async (req, res) => {
         email: user.email,
         role: user.role,
         is_subscribed: user.is_subscribed,
-        subscription_expires_at: user.subscription_expires_at
+        subscription_expires_at: user.subscription_expires_at,
+        member_expires_at: user.member_expires_at,
+        is_active_member: user.role === 'admin' || user.is_subscribed ||
+          (user.member_expires_at && new Date(user.member_expires_at) > new Date())
       }
     }, '登录成功');
   } catch (err) {
@@ -182,6 +188,9 @@ router.get('/me', authMiddleware, async (req, res) => {
       role: user.role,
       is_subscribed: user.is_subscribed,
       subscription_expires_at: user.subscription_expires_at,
+      member_expires_at: user.member_expires_at,
+      is_active_member: user.role === 'admin' || user.is_subscribed ||
+        (user.member_expires_at && new Date(user.member_expires_at) > new Date()),
       created_at: user.created_at
     });
   } catch (err) {

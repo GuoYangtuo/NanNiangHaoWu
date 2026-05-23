@@ -41,9 +41,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = user?.role === 'admin';
+  const isActiveMember = user?.is_active_member || isAdmin;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin, isActiveMember, fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -36,7 +36,7 @@ const findLeafById = (nodes, id) => {
 };
 
 const Home = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isActiveMember } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ const Home = () => {
   const [hasMore, setHasMore] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
   const { categories, lockedIds } = useCategories();
-  const isSubscribed = !!(user && (user.is_subscribed || user.role === 'admin'));
+  const isSubscribed = isActiveMember;
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);

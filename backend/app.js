@@ -22,6 +22,7 @@ const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
 const favoritesRoutes = require('./routes/favorites');
+const subscriptionRoutes = require('./routes/subscription');
 const { getRandomSchedule, setLockedIds, getLeafIds } = require('./data/categories');
 
 const app = express();
@@ -54,6 +55,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -135,6 +137,21 @@ const initializeDatabase = async () => {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
       `);
       logger.info('Database', 'content_edits 表创建完成');
+    }
+
+    // 确保 users 表存在 member_expires_at 列（旧数据库升级用）
+    try {
+      const [results] = await sequelize.query(
+        "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'member_expires_at' LIMIT 1"
+      );
+      if (!results || results.length === 0) {
+        await sequelize.query(
+          "ALTER TABLE `users` ADD COLUMN `member_expires_at` DATETIME NULL COMMENT '会员到期时间' AFTER `subscription_expires_at`"
+        );
+        logger.info('Database', 'users 表 member_expires_at 列已添加');
+      }
+    } catch (err) {
+      logger.warn('Database', `member_expires_at 列检查/创建失败: ${err.message}，将跳过`);
     }
 
     // 创建管理员账号

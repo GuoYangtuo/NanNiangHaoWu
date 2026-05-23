@@ -3,13 +3,17 @@ import { useAuth } from '../context/AuthContext';
 import { SITE_NAME } from '../utils/constants';
 import { useState, useRef, useEffect } from 'react';
 import { getFavorites, removeFavorite } from '../api/favorites';
+import { SubscriptionModal } from './SubscriptionModal';
+import { ProductReviewStatusModal } from './ProductReviewStatusModal';
 
 const Layout = () => {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isActiveMember, fetchUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [favoritesModalOpen, setFavoritesModalOpen] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [reviewStatusModalOpen, setReviewStatusModalOpen] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const hideTimer = useRef(null);
@@ -37,6 +41,20 @@ const Layout = () => {
     setMenuOpen(false);
     setFavoritesModalOpen(true);
     fetchFavorites();
+  };
+
+  const openSubscriptionModal = () => {
+    setMenuOpen(false);
+    setSubscriptionModalOpen(true);
+  };
+
+  const openReviewStatusModal = () => {
+    setMenuOpen(false);
+    setReviewStatusModalOpen(true);
+  };
+
+  const handleSubscribed = async (subData) => {
+    await fetchUser();
   };
 
   const fetchFavorites = async () => {
@@ -118,6 +136,27 @@ const Layout = () => {
                         <div className="px-4 py-3 border-b border-warm-border">
                           <p className="text-sm font-semibold text-text1">{user.username}</p>
                           <p className="text-xs text-text2 mt-0.5">{user.email || '用户'}</p>
+                          {/* 会员状态 */}
+                          <div className="mt-1.5">
+                            {isActiveMember ? (
+                              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                会员
+                              </span>
+                            ) : (
+                              <button
+                                onClick={openSubscriptionModal}
+                                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-warm-bg text-text2 hover:bg-primary/10 hover:text-primary transition-colors"
+                              >
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                开通会员 ¥9.9/月
+                              </button>
+                            )}
+                          </div>
                         </div>
 
                         {/* 菜单项 */}
@@ -145,6 +184,32 @@ const Layout = () => {
                           </svg>
                           我的收藏
                         </button>
+
+                        <button
+                          onClick={openReviewStatusModal}
+                          className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors w-full text-left ${
+                            location.pathname === '/favorites'
+                              ? 'bg-primary-light/50 text-primary-dark font-medium'
+                              : 'text-text2 hover:bg-primary-light/50 hover:text-primary'
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                          </svg>
+                          我的审核
+                        </button>
+
+                        {!isActiveMember && (
+                          <button
+                            onClick={openSubscriptionModal}
+                            className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors w-full text-left text-primary hover:bg-primary-light/50"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                            订阅会员
+                          </button>
+                        )}
 
                         {isAdmin && (
                           <Link
@@ -297,6 +362,21 @@ const Layout = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 订阅弹窗 */}
+      {subscriptionModalOpen && (
+        <SubscriptionModal
+          onClose={() => setSubscriptionModalOpen(false)}
+          onSubscribed={handleSubscribed}
+        />
+      )}
+
+      {/* 审核状态弹窗 */}
+      {reviewStatusModalOpen && (
+        <ProductReviewStatusModal
+          onClose={() => setReviewStatusModalOpen(false)}
+        />
       )}
     </div>
   );

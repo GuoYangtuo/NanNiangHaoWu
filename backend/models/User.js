@@ -43,6 +43,11 @@ const User = sequelize.define('User', {
     allowNull: true,
     comment: '订阅到期时间（暂不使用）'
   },
+  member_expires_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '会员到期时间'
+  },
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user'
