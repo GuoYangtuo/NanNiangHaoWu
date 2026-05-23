@@ -5,7 +5,7 @@ const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const { authMiddleware, optionalAuth } = require('../middlewares/auth');
-const { isValidCategory, getCategoryById, CATEGORY_TREE } = require('../data/categories');
+const { isValidCategory, getCategoryById, CATEGORY_TREE, getExcludedLeafIds } = require('../data/categories');
 const upload = require('../middlewares/upload');
 const { success, badRequest, notFound, serverError, forbidden } = require('../utils/response');
 const logger = require('../utils/logger');
@@ -47,6 +47,11 @@ router.get('/', optionalAuth, async (req, res) => {
     const whereClause = { status: 'approved' };
     if (category_id && isValidCategory(category_id)) {
       whereClause.category_id = category_id;
+    } else if (!category_id) {
+      const excludedIds = getExcludedLeafIds();
+      if (excludedIds.length > 0) {
+        whereClause.category_id = { [require('sequelize').Op.notIn]: excludedIds };
+      }
     }
 
     const { count, rows: products } = await Product.findAndCountAll({

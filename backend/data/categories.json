@@ -327,6 +327,7 @@
       "id": "folder-adult",
       "name": "色色",
       "type": "folder",
+      "excluded_from_home": true,
       "children": [
         {
           "id": "adult-lingerie",

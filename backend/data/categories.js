@@ -21,12 +21,17 @@ const loadData = () => {
 loadData();
 
 const leafCategories = [];
-const collectLeaves = (nodes) => {
+const excludedLeafIds = [];
+const collectLeaves = (nodes, parentExcluded = false) => {
   for (const node of nodes) {
+    const isExcluded = parentExcluded || !!node.excluded_from_home;
     if (node.children) {
-      collectLeaves(node.children);
+      collectLeaves(node.children, isExcluded);
     } else {
       leafCategories.push(node.id);
+      if (isExcluded) {
+        excludedLeafIds.push(node.id);
+      }
     }
   }
 };
@@ -76,8 +81,11 @@ const setRandomSchedule = (schedule) => {
 
 const getLeafIds = () => [...leafCategories];
 
+const getExcludedLeafIds = () => [...excludedLeafIds];
+
 const reload = () => {
   leafCategories.length = 0;
+  excludedLeafIds.length = 0;
   loadData();
   collectLeaves(CATEGORY_TREE);
 };
@@ -93,5 +101,6 @@ module.exports = {
   setLockedIds,
   setRandomSchedule,
   getLeafIds,
+  getExcludedLeafIds,
   reload
 };
