@@ -1,11 +1,11 @@
 {
   "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
   "locked_category_ids": [
-    "nursing-face-wash",
-    "nursing-body-shower-gel",
-    "adult-lubes",
-    "adult-toys",
-    "clothing-shoes-hanfu"
+    "clothing-dress-hanfu",
+    "clothing-shoes-hanfu",
+    "makeup-body",
+    "clothing-socks-ankle",
+    "nursing-face-antiaging"
   ],
   "random_schedule": {
     "enabled": true,
@@ -133,6 +133,11 @@
               "type": "leaf"
             }
           ]
+        },
+        {
+          "id": "nursing-hair-removal",
+          "name": "脱毛",
+          "type":"leaf"
         }
       ]
     },
@@ -310,6 +315,11 @@
               "type": "leaf"
             }
           ]
+        },
+        {
+          "id": "clothing-underwear",
+          "name":"内衣内裤",
+          "type":"leaf"
         }
       ]
     },
