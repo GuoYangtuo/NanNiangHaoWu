@@ -1,11 +1,11 @@
 {
   "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
   "locked_category_ids": [
-    "nursing-mouth-toothbrush",
-    "clothing-accessories-hair",
-    "nursing-mouth-toothpaste",
-    "clothing-socks-knee",
-    "makeup-face-nose"
+    "nursing-face-wash",
+    "nursing-body-shower-gel",
+    "adult-lubes",
+    "adult-toys",
+    "clothing-shoes-hanfu"
   ],
   "random_schedule": {
     "enabled": true,

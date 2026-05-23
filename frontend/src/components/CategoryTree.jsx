@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { useCategories } from '../hooks/useCategories';
-import { useAuth } from '../context/AuthContext';
 
-const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories, lockedIds, isSubscribed, isAdmin }) => {
+const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onToggle, categories, lockedIds }) => {
   const isFolder = node.type === 'folder';
   const isExpanded = !!expandedFolders[node.id];
   const isSelected = selectedId === node.id;
   const hasContent = isFolder && !!node.content;
   const isNodeLocked = lockedIds.includes(node.id);
-  const canAccess = !isNodeLocked || isSubscribed || isAdmin;
 
   const handleClick = () => {
-    if (isNodeLocked && !isSubscribed && !isAdmin) return;
     if (isFolder) {
       onToggle(node.id);
       if (hasContent) {
@@ -39,13 +36,7 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
         onClick={handleClick}
         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
           isSelected
-            ? canAccess
-              ? 'bg-primary text-white shadow-sm font-medium'
-              : 'bg-red-50 text-red-300 cursor-default'
-            : isNodeLocked
-            ? canAccess
-              ? 'text-text2/50 cursor-default'
-              : 'text-text2/40 cursor-default'
+            ? 'bg-primary text-white shadow-sm font-medium'
             : isFolder
             ? 'text-text2 hover:bg-primary-light/40 font-medium'
             : 'text-text2 hover:bg-primary-light/40'
@@ -92,8 +83,6 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
               onToggle={onToggle}
               categories={categories}
               lockedIds={lockedIds}
-              isSubscribed={isSubscribed}
-              isAdmin={isAdmin}
             />
           ))}
         </div>
@@ -104,10 +93,7 @@ const CategoryNode = ({ node, depth, selectedId, onSelect, expandedFolders, onTo
 
 const CategoryTree = ({ selectedId, onSelect }) => {
   const { categories, lockedIds, loading, error } = useCategories();
-  const { user, isAdmin } = useAuth();
   const [expandedFolders, setExpandedFolders] = useState({});
-
-  const isSubscribed = !!(user && (user.is_subscribed || user.role === 'admin'));
 
   const toggleFolder = (folderId) => {
     setExpandedFolders((prev) => ({
@@ -155,8 +141,6 @@ const CategoryTree = ({ selectedId, onSelect }) => {
             onToggle={toggleFolder}
             categories={categories}
             lockedIds={lockedIds}
-            isSubscribed={isSubscribed}
-            isAdmin={isAdmin}
           />
         ))}
       </div>

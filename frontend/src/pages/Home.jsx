@@ -100,7 +100,6 @@ const Home = () => {
   };
 
   const handleCategorySelect = (categoryId) => {
-    if (categoryId && lockedIds.includes(categoryId) && !isSubscribed && !isAdmin) return;
     setSelectedCategory(categoryId);
   };
 
@@ -185,7 +184,6 @@ const Home = () => {
             value={selectedCategory || ''}
             onChange={(e) => {
               const val = e.target.value || null;
-              if (val && lockedIds.includes(val) && !isSubscribed && !isAdmin) return;
               setSelectedCategory(val);
             }}
             className="w-full px-4 py-2.5 bg-white border border-warm-border rounded-lg text-sm"
@@ -193,25 +191,14 @@ const Home = () => {
             <option value="">全部好物</option>
             {flatCategories.map((cat) => {
               const locked = lockedIds.includes(cat.id);
-              const disabled = locked && !isSubscribed && !isAdmin;
               return (
-                <option key={cat.id} value={cat.id} disabled={disabled}>
+                <option key={cat.id} value={cat.id}>
                   {cat.label}{locked ? ' 🔒' : ''}
                 </option>
               );
             })}
           </select>
         </div>
-
-        {/* 锁定提示 */}
-        {selectedCategory && lockedIds.includes(selectedCategory) && !isSubscribed && !isAdmin && (
-          <div className="mb-4 flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            该分类为会员专属内容，付费订阅后即可查看
-          </div>
-        )}
 
         {/* 页面标题 — markdown 模式下隐藏 */}
         {!selectedFolderContent && (
@@ -233,9 +220,9 @@ const Home = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-text1 mb-2">会员专属内容</h2>
+            <h2 className="text-xl font-bold text-text1 mb-2">此类目的内容已被锁定</h2>
             <p className="text-text2 text-sm mb-6 max-w-sm">
-              此分类下的内容仅对付费会员开放，付费订阅后可查看全部好物推荐和经验分享。
+              每个月会随机锁定几个类目，付费订阅或上传三个好物即可成为会员并查看内容
             </p>
             <button
               onClick={() => window.location.href = '/login'}
