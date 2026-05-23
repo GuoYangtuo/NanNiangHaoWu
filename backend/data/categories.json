@@ -137,7 +137,7 @@
         {
           "id": "nursing-hair-removal",
           "name": "脱毛",
-          "type":"leaf"
+          "type": "leaf"
         }
       ]
     },
@@ -237,6 +237,7 @@
           "id": "clothing-socks",
           "name": "袜子",
           "type": "folder",
+          "content": "## 袜子选购指南\n\n很多小南娘的女装之旅都是从一双黑色或白色袜子开始的，虽然可爱的小南娘不能满足于只露一双腿，但一双合适的袜子对小南娘来说必不可少\n\n此分类会注重收集大码或较厚的适合男生的袜子~\n\n另外请务必注重腿毛管理哦~",
           "children": [
             {
               "id": "clothing-socks-thigh",
@@ -318,8 +319,8 @@
         },
         {
           "id": "clothing-underwear",
-          "name":"内衣内裤",
-          "type":"leaf"
+          "name": "内衣内裤",
+          "type": "leaf"
         }
       ]
     },
