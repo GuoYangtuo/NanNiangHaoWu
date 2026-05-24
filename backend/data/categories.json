@@ -1,11 +1,11 @@
 {
   "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
   "locked_category_ids": [
+    "nursing-face-wash",
+    "nursing-body-lotion",
+    "makeup-nail",
     "clothing-dress-hanfu",
-    "clothing-shoes-hanfu",
-    "makeup-body",
-    "clothing-socks-ankle",
-    "nursing-face-antiaging"
+    "makeup-body"
   ],
   "random_schedule": {
     "enabled": true,
@@ -207,6 +207,11 @@
               "type": "leaf"
             },
             {
+              "id": "clothing-dress-maid",
+              "name": "女仆装",
+              "type": "leaf"
+            },
+            {
               "id": "clothing-dress-softgirl",
               "name": "软妹服 / 日常可爱风",
               "type": "leaf"
@@ -239,6 +244,11 @@
           "type": "folder",
           "content": "## 袜子选购指南\n\n很多小南娘的女装之旅都是从一双黑色或白色袜子开始的，虽然可爱的小南娘不能满足于只露一双腿，但一双合适的袜子对小南娘来说必不可少\n\n此分类会注重收集大码或较厚的适合男生的袜子~\n\n另外请务必注重腿毛管理哦~",
           "children": [
+            {
+              "id": "clothing-socks-pantyhose",
+              "name": "连裤袜",
+              "type": "leaf"
+            },
             {
               "id": "clothing-socks-thigh",
               "name": "大腿袜",
