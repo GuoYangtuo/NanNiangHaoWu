@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
+import RatingIcon from './RatingIcon';
 
 const ProductCard = ({ product, onEdit }) => {
-  const { id, name, images, category, user, created_at } = product;
+  const { id, name, images, category, user, created_at, average_rating, review_count } = product;
 
   // images 数组中每个元素已经是完整的 /uploads/xxx 格式，或者原始文件名
   const displayImage = images && images.length > 0
@@ -74,6 +75,12 @@ const ProductCard = ({ product, onEdit }) => {
         <p className="text-xs text-text2/60 mt-1">
           {formatDate(created_at)}
         </p>
+        {average_rating > 0 && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <RatingIcon rating={average_rating} size={14} />
+            <span className="text-xs text-text2/60">({review_count})</span>
+          </div>
+        )}
       </div>
     </Link>
   );

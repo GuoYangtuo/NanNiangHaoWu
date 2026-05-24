@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../api/product';
 import { addFavorite, removeFavorite } from '../api/favorites';
+import { getProductReviews, createReview, deleteReview } from '../api/reviews';
 import { useAuth } from '../context/AuthContext';
+import RatingIcon from '../components/RatingIcon';
 import ProductEditModal from '../components/ProductEditModal';
 
 const ProductDetail = () => {
@@ -15,6 +17,16 @@ const ProductDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [editModalProduct, setEditModalProduct] = useState(null);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewTotal, setReviewTotal] = useState(0);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [myRating, setMyRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [commentText, setCommentText] = useState('');
+  const [reviewError, setReviewError] = useState('');
+  const [myReviewId, setMyReviewId] = useState(null);
 
   const isAdmin = user?.role === 'admin';
 
@@ -31,9 +43,28 @@ const ProductDetail = () => {
     }
   };
 
+  const fetchReviews = async (page = 1) => {
+    setReviewLoading(true);
+    try {
+      const res = await getProductReviews(id, { page, limit: 10 });
+      if (page === 1) {
+        setReviews(res.data.reviews || []);
+      } else {
+        setReviews(prev => [...prev, ...(res.data.reviews || [])]);
+      }
+      setReviewTotal(res.data.pagination?.total || 0);
+    } catch (err) {
+      console.error('获取评论失败:', err);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchProduct();
+      fetchReviews(1);
+      setReviewPage(1);
     }
   }, [id]);
 
@@ -74,6 +105,48 @@ const ProductDetail = () => {
       console.error('收藏操作失败:', err);
     }
   };
+
+  const handleSubmitReview = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (myRating === 0) {
+      setReviewError('请先选择评分');
+      return;
+    }
+    setSubmitting(true);
+    setReviewError('');
+    try {
+      await createReview({
+        product_id: product.id,
+        rating: myRating,
+        comment: commentText.trim()
+      });
+      setCommentText('');
+      setMyRating(0);
+      setHoverRating(0);
+      await fetchReviews(1);
+      await fetchProduct();
+    } catch (err) {
+      setReviewError(err.message || '提交失败，请稍后重试');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!confirm('确定删除这条评论吗？')) return;
+    try {
+      await deleteReview(reviewId);
+      await fetchReviews(1);
+      await fetchProduct();
+    } catch (err) {
+      alert(err.message || '删除失败');
+    }
+  };
+
+  const hasMoreReviews = reviewTotal > reviews.length;
 
   if (loading) {
     return (
@@ -306,6 +379,166 @@ const ProductDetail = () => {
                 </svg>
               </a>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* 评论区域 */}
+      <div className="mt-6 bg-white rounded-2xl shadow-card overflow-hidden px-6 py-6">
+        <h2 className="text-base font-bold text-text1 mb-4 flex items-center gap-2">
+          <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          商品评分
+          {product.review_count > 0 && (
+            <span className="ml-2 text-sm font-normal text-text2">
+              <RatingIcon rating={product.average_rating} size={16} showValue />
+              {' '}
+              <span className="text-xs text-text2/60">（{product.review_count} 条评价）</span>
+            </span>
+          )}
+        </h2>
+
+        {/* 发表/编辑评论 */}
+        <div className="bg-warm-bg rounded-xl p-5 mb-6">
+          <h3 className="text-sm font-semibold text-text1 mb-3">
+            {user ? '发表评价' : '登录后可发表评价'}
+          </h3>
+
+          {/* 评分选择 */}
+          <div className="mb-3">
+            <span className="text-sm text-text2 mr-3">我的评分：</span>
+            <span
+              className="inline-flex items-center gap-1"
+              onMouseLeave={() => setHoverRating(0)}
+            >
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setMyRating(star)}
+                  onMouseEnter={() => user && setHoverRating(star)}
+                  disabled={!user}
+                  className={`transition-transform ${user ? 'hover:scale-110 cursor-pointer' : 'cursor-default'}`}
+                  title={`${star}星`}
+                >
+                  <img
+                    src="/evaluationIcon.png"
+                    alt={`${star}星`}
+                    className="block"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      opacity: (hoverRating || myRating) >= star ? 1 : 0.15,
+                      filter: (hoverRating || myRating) >= star ? 'none' : 'grayscale(100%)'
+                    }}
+                  />
+                </button>
+              ))}
+            </span>
+            {myRating > 0 && (
+              <span className="ml-2 text-sm text-primary font-medium">
+                {myRating}星
+              </span>
+            )}
+          </div>
+
+          {/* 评论输入 */}
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="写购买体验、使用感受..."
+            rows={3}
+            maxLength={2000}
+            disabled={!user || submitting}
+            className="w-full px-4 py-3 border border-warm-border rounded-lg text-sm resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:bg-warm-bg disabled:cursor-not-allowed"
+          />
+
+          {reviewError && (
+            <p className="mt-2 text-xs text-red-500">{reviewError}</p>
+          )}
+
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-xs text-text2/60">
+              {commentText.length}/2000
+            </span>
+            <button
+              onClick={handleSubmitReview}
+              disabled={!user || myRating === 0 || submitting}
+              className="px-5 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? '提交中...' : '发表评论'}
+            </button>
+          </div>
+        </div>
+
+        {/* 评论列表 */}
+        <div>
+          <h3 className="text-sm font-semibold text-text1 mb-4">
+            全部评价 {reviewTotal > 0 && <span className="font-normal text-text2">（{reviewTotal} 条）</span>}
+          </h3>
+
+          {reviewLoading && reviews.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="text-center py-8 text-text2 text-sm">
+              暂无评价，来发表第一条评价吧~
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div key={review.id} className="flex gap-3 pb-4 border-b border-warm-border last:border-0 last:pb-0">
+                    <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-primary text-xs font-bold">
+                        {review.user?.username?.charAt(0).toUpperCase() || 'N'}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <span className="text-sm font-medium text-text1">
+                          {review.user?.username || '匿名用户'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <RatingIcon rating={review.rating} size={14} />
+                          {(user?.id === review.user?.id || user?.role === 'admin') && (
+                            <button
+                              onClick={() => handleDeleteReview(review.id)}
+                              className="text-xs text-text2/40 hover:text-red-400 transition-colors"
+                            >
+                              删除
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-sm text-text2 leading-relaxed">{review.comment}</p>
+                      )}
+                      <p className="text-xs text-text2/50 mt-1">
+                        {formatDate(review.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {hasMoreReviews && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => {
+                      const nextPage = reviewPage + 1;
+                      setReviewPage(nextPage);
+                      fetchReviews(nextPage);
+                    }}
+                    disabled={reviewLoading}
+                    className="px-6 py-2 text-sm border border-warm-border rounded-lg text-text2 hover:bg-warm-bg transition-colors disabled:opacity-50"
+                  >
+                    {reviewLoading ? '加载中...' : '加载更多'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

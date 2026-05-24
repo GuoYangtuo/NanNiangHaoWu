@@ -45,6 +45,18 @@ const Product = sequelize.define('Product', {
     defaultValue: [],
     comment: '多张图片路径 JSON 数组'
   },
+  average_rating: {
+    type: DataTypes.DECIMAL(3, 2),
+    defaultValue: 0.00,
+    allowNull: false,
+    comment: '平均评分，1-5分，保留两位小数'
+  },
+  review_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    allowNull: false,
+    comment: '评论总数'
+  },
   status: {
     type: DataTypes.ENUM('pending', 'approved', 'rejected'),
     defaultValue: 'pending',

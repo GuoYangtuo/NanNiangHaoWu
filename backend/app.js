@@ -15,6 +15,7 @@ const User = require('./models/User');
 const Product = require('./models/Product');
 const ContentEdit = require('./models/ContentEdit');
 const Favorite = require('./models/Favorite');
+const Review = require('./models/Review');
 const logger = require('./utils/logger');
 
 const authRoutes = require('./routes/auth');
@@ -23,6 +24,7 @@ const categoryRoutes = require('./routes/categories');
 const adminRoutes = require('./routes/admin');
 const favoritesRoutes = require('./routes/favorites');
 const subscriptionRoutes = require('./routes/subscription');
+const reviewsRoutes = require('./routes/reviews');
 const { getRandomSchedule, setLockedIds, getLeafIds } = require('./data/categories');
 
 const app = express();
@@ -56,6 +58,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -96,6 +99,9 @@ const setupAssociations = () => {
   Favorite.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
   Favorite.belongsTo(Product, { as: 'product', foreignKey: 'product_id' });
   Product.hasMany(Favorite, { as: 'favorites', foreignKey: 'product_id' });
+  Review.belongsTo(User, { as: 'user', foreignKey: 'user_id' });
+  Review.belongsTo(Product, { as: 'product', foreignKey: 'product_id' });
+  Product.hasMany(Review, { as: 'reviews', foreignKey: 'product_id' });
 };
 
 // 初始化数据库并创建管理员账号
@@ -117,8 +123,7 @@ const initializeDatabase = async () => {
 
     // 手动创建 content_edits 表（如果不存在），避免依赖 alter 触发 64 key 限制
     const [tables] = await sequelize.query(
-      "SHOW TABLES LIKE 'content_edits'",
-      { type: sequelize.QueryTypes.SHOWTABLE }
+      "SHOW TABLES LIKE 'content_edits'"
     );
     if (!tables || tables.length === 0) {
       await sequelize.query(`
@@ -152,6 +157,52 @@ const initializeDatabase = async () => {
       }
     } catch (err) {
       logger.warn('Database', `member_expires_at 列检查/创建失败: ${err.message}，将跳过`);
+    }
+
+    // 确保 products 表存在 average_rating 和 review_count 列（旧数据库升级用）
+    try {
+      const [results2] = await sequelize.query(
+        "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'average_rating' LIMIT 1"
+      );
+      if (!results2 || results2.length === 0) {
+        await sequelize.query(
+          "ALTER TABLE `products` ADD COLUMN `average_rating` DECIMAL(3,2) NOT NULL DEFAULT 0.00 COMMENT '平均评分' AFTER `images`"
+        );
+        await sequelize.query(
+          "ALTER TABLE `products` ADD COLUMN `review_count` INT NOT NULL DEFAULT 0 COMMENT '评论总数' AFTER `average_rating`"
+        );
+        logger.info('Database', 'products 表 average_rating 和 review_count 列已添加');
+      }
+    } catch (err) {
+      logger.warn('Database', `products average_rating/review_count 列检查/创建失败: ${err.message}，将跳过`);
+    }
+
+    // 确保 reviews 表存在（旧数据库升级用）
+    try {
+      const [reviewTables] = await sequelize.query(
+        "SHOW TABLES LIKE 'reviews'"
+      );
+      if (!reviewTables || reviewTables.length === 0) {
+        await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS reviews (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            product_id INT NOT NULL,
+            user_id INT NOT NULL,
+            rating INT NOT NULL,
+            comment TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_product (product_id),
+            INDEX idx_user (user_id),
+            UNIQUE INDEX idx_product_user (product_id, user_id),
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        logger.info('Database', 'reviews 表创建完成');
+      }
+    } catch (err) {
+      logger.warn('Database', `reviews 表检查/创建失败: ${err.message}，将跳过`);
     }
 
     // 创建管理员账号

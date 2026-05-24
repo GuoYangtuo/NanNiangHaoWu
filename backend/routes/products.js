@@ -79,7 +79,9 @@ router.get('/', optionalAuth, async (req, res) => {
         images: (p.images || []).map((img) => `/uploads/${img}`),
         category: cat ? { id: cat.id, name: cat.name, breadcrumbs: cat.breadcrumbs } : null,
         user: p.user,
-        created_at: p.created_at
+        created_at: p.created_at,
+        average_rating: parseFloat(p.average_rating) || 0,
+        review_count: p.review_count || 0
       };
     });
 
@@ -129,7 +131,9 @@ router.get('/:id', optionalAuth, async (req, res) => {
       images: (product.images || []).map((img) => `/uploads/${img}`),
       category: cat ? { id: cat.id, name: cat.name, parentName: cat.parentName } : null,
       user: product.user,
-      created_at: product.created_at
+      created_at: product.created_at,
+      average_rating: parseFloat(product.average_rating) || 0,
+      review_count: product.review_count || 0
     });
   } catch (err) {
     logger.error('Products', '获取商品详情失败', { error: err.message });
@@ -289,7 +293,9 @@ router.get('/my-products', authMiddleware, async (req, res) => {
         images: (p.images || []).map((img) => `/uploads/${img}`),
         status: p.status,
         category: cat ? { id: cat.id, name: cat.name } : null,
-        created_at: p.created_at
+        created_at: p.created_at,
+        average_rating: parseFloat(p.average_rating) || 0,
+        review_count: p.review_count || 0
       };
     });
 
