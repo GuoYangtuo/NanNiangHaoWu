@@ -7,6 +7,20 @@ import { useAuth } from '../context/AuthContext';
 import RatingIcon from '../components/RatingIcon';
 import ProductEditModal from '../components/ProductEditModal';
 
+const RATING_LABELS = [
+  { max: 1.5, label: '拉完了', color: 'text-gray-400' },
+  { max: 2.5, label: 'NPC', color: 'text-green-500' },
+  { max: 3.5, label: '人上人', color: 'text-blue-500' },
+  { max: 4.5, label: '顶级', color: 'text-purple-500' },
+  { max: 5.0, label: '夯爆了', color: 'text-red-500' },
+];
+
+const getRatingLabel = (rating) => {
+  const r = parseFloat(rating);
+  if (r <= 0) return null;
+  return RATING_LABELS.find((l) => r <= l.max) || RATING_LABELS[RATING_LABELS.length - 1];
+};
+
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -48,9 +62,11 @@ const ProductDetail = () => {
     try {
       const res = await getProductReviews(id, { page, limit: 10 });
       if (page === 1) {
+        const myReview = (res.data.reviews || []).find((r) => r.user?.id === user?.id);
+        setMyReviewId(myReview?.id || null);
         setReviews(res.data.reviews || []);
       } else {
-        setReviews(prev => [...prev, ...(res.data.reviews || [])]);
+        setReviews((prev) => [...prev, ...(res.data.reviews || [])]);
       }
       setReviewTotal(res.data.pagination?.total || 0);
     } catch (err) {
@@ -79,6 +95,13 @@ const ProductDetail = () => {
       setIsFavorited(false);
     }
   }, [product, user]);
+
+  // 登录/登出时重新获取评论列表，以更新我的评论 ID 状态
+  useEffect(() => {
+    if (id) {
+      fetchReviews(1);
+    }
+  }, [user]);
 
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -113,6 +136,10 @@ const ProductDetail = () => {
     }
     if (myRating === 0) {
       setReviewError('请先选择评分');
+      return;
+    }
+    if (!commentText.trim()) {
+      setReviewError('请填写评论内容');
       return;
     }
     setSubmitting(true);
@@ -385,19 +412,25 @@ const ProductDetail = () => {
 
       {/* 评论区域 */}
       <div className="mt-6 bg-white rounded-2xl shadow-card overflow-hidden px-6 py-6">
-        <h2 className="text-base font-bold text-text1 mb-4 flex items-center gap-2">
-          <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          商品评分
-          {product.review_count > 0 && (
-            <span className="ml-2 text-sm font-normal text-text2">
-              <RatingIcon rating={product.average_rating} size={16} showValue />
-              {' '}
-              <span className="text-xs text-text2/60">（{product.review_count} 条评价）</span>
-            </span>
-          )}
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-text1 flex items-center gap-2">
+            <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            商品评分
+          </h2>
+          {product.review_count > 0 && (() => {
+            const label = getRatingLabel(product.average_rating);
+            return (
+              <span className="flex items-center gap-1.5">
+                <RatingIcon rating={product.average_rating} size={24} />
+                <span className="text-sm text-text2 font-medium">{product.average_rating.toFixed(1)}</span>
+                {label && <span className={`text-xs font-semibold ${label.color}`}>{label.label}</span>}
+                <span className="text-xs text-text2/60">（平均自 {product.review_count} 条评价）</span>
+              </span>
+            );
+          })()}
+        </div>
 
         {/* 发表/编辑评论 */}
         <div className="bg-warm-bg rounded-xl p-5 mb-6">
@@ -406,7 +439,7 @@ const ProductDetail = () => {
           </h3>
 
           {/* 评分选择 */}
-          <div className="mb-3">
+          <div className="flex items-center mb-3">
             <span className="text-sm text-text2 mr-3">我的评分：</span>
             <span
               className="inline-flex items-center gap-1"
@@ -428,25 +461,28 @@ const ProductDetail = () => {
                     style={{
                       width: 28,
                       height: 28,
-                      opacity: (hoverRating || myRating) >= star ? 1 : 0.15,
+                      opacity: (hoverRating || myRating) >= star ? 1 : 0.3,
                       filter: (hoverRating || myRating) >= star ? 'none' : 'grayscale(100%)'
                     }}
                   />
                 </button>
               ))}
             </span>
-            {myRating > 0 && (
-              <span className="ml-2 text-sm text-primary font-medium">
-                {myRating}星
-              </span>
-            )}
+            {myRating > 0 && (() => {
+              const label = getRatingLabel(myRating);
+              return label ? (
+                <span className={`text-sm font-semibold ml-2 ${label.color}`}>
+                  {label.label}
+                </span>
+              ) : null;
+            })()}
           </div>
 
           {/* 评论输入 */}
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="写购买体验、使用感受..."
+            placeholder="购买后的使用体验、感受..."
             rows={3}
             maxLength={2000}
             disabled={!user || submitting}
@@ -463,10 +499,10 @@ const ProductDetail = () => {
             </span>
             <button
               onClick={handleSubmitReview}
-              disabled={!user || myRating === 0 || submitting}
+              disabled={user && (myRating === 0 || !commentText.trim() || submitting)}
               className="px-5 py-2 bg-primary hover:bg-primary-dark text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? '提交中...' : '发表评论'}
+              {submitting ? '提交中...' : !user ? '登录后评论' : myReviewId ? '更新评论' : '发表评论'}
             </button>
           </div>
         </div>
@@ -502,6 +538,12 @@ const ProductDetail = () => {
                         </span>
                         <div className="flex items-center gap-2">
                           <RatingIcon rating={review.rating} size={14} />
+                          {(() => {
+                            const label = getRatingLabel(review.rating);
+                            return label ? (
+                              <span className={`text-xs font-semibold ${label.color}`}>{label.label}</span>
+                            ) : null;
+                          })()}
                           {(user?.id === review.user?.id || user?.role === 'admin') && (
                             <button
                               onClick={() => handleDeleteReview(review.id)}

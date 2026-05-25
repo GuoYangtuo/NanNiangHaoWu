@@ -1,18 +1,27 @@
 import { Link } from 'react-router-dom';
 import RatingIcon from './RatingIcon';
 
+const RATING_LABELS = [
+  { max: 1.5, label: '拉完了', color: 'text-gray-400' },
+  { max: 2.5, label: 'NPC', color: 'text-green-500' },
+  { max: 3.5, label: '人上人', color: 'text-blue-500' },
+  { max: 4.5, label: '顶级', color: 'text-purple-500' },
+  { max: 5.0, label: '夯爆了', color: 'text-red-500' },
+];
+
+const getRatingLabel = (rating) => {
+  const r = parseFloat(rating);
+  if (r <= 0) return null;
+  return RATING_LABELS.find((l) => r <= l.max) || RATING_LABELS[RATING_LABELS.length - 1];
+};
+
 const ProductCard = ({ product, onEdit }) => {
-  const { id, name, images, category, user, created_at, average_rating, review_count } = product;
+  const { id, name, images, category, average_rating, review_count } = product;
 
   // images 数组中每个元素已经是完整的 /uploads/xxx 格式，或者原始文件名
   const displayImage = images && images.length > 0
     ? (images[0].startsWith('/uploads') ? images[0] : `/uploads/${images[0]}`)
     : 'https://via.placeholder.com/300x200/F0E8E4/E879A9?text=No+Image';
-
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    return `${date.getMonth() + 1}月${date.getDate()}日`;
-  };
 
   return (
     <Link
@@ -64,23 +73,17 @@ const ProductCard = ({ product, onEdit }) => {
               {category.name}
             </span>
           )}
-          <div className="flex items-center gap-1 text-xs text-text2">
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span>{user?.username || '匿名'}</span>
-          </div>
+          {average_rating > 0 && (() => {
+            const label = getRatingLabel(average_rating);
+            return (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-text2/60">{review_count}人评价</span>
+                <RatingIcon rating={average_rating} size={18} />
+                {label && <span className={`text-xs font-semibold ${label.color}`}>{label.label}</span>}
+              </div>
+            );
+          })()}
         </div>
-
-        <p className="text-xs text-text2/60 mt-1">
-          {formatDate(created_at)}
-        </p>
-        {average_rating > 0 && (
-          <div className="flex items-center gap-1.5 mt-1">
-            <RatingIcon rating={average_rating} size={14} />
-            <span className="text-xs text-text2/60">({review_count})</span>
-          </div>
-        )}
       </div>
     </Link>
   );

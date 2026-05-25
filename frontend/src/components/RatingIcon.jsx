@@ -1,4 +1,4 @@
-const RatingIcon = ({ rating = 0, size = 16, showValue = false, className = '' }) => {
+const RatingIcon = ({ rating = 0, size = 16, className = '' }) => {
   const totalStars = 5;
   const clampedRating = Math.min(Math.max(rating, 0), totalStars);
 
@@ -17,7 +17,7 @@ const RatingIcon = ({ rating = 0, size = 16, showValue = false, className = '' }
         <img
           src="/evaluationIcon.png"
           alt=""
-          className="absolute inset-0 w-full h-full opacity-20"
+          className="absolute inset-0 w-full h-full opacity-25"
           style={{ filter: 'grayscale(100%)' }}
         />
         {isFull && (
@@ -47,11 +47,6 @@ const RatingIcon = ({ rating = 0, size = 16, showValue = false, className = '' }
   return (
     <span className={`inline-flex items-center gap-0.5 ${className}`}>
       {icons}
-      {showValue && clampedRating > 0 && (
-        <span className="ml-1 text-xs text-text2 font-medium">
-          {clampedRating.toFixed(1)}
-        </span>
-      )}
     </span>
   );
 };
