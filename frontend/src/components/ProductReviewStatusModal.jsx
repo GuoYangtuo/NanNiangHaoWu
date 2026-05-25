@@ -42,7 +42,7 @@ export const ProductReviewStatusModal = ({ onClose }) => {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[75vh] flex flex-col">
         {/* 标题栏 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-warm-border flex-shrink-0">
-          <h2 className="text-base font-bold text-text1">我的商品审核状态</h2>
+          <h2 className="text-base font-bold text-text1">我的好物审核状态</h2>
           <button
             onClick={onClose}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-warm-bg text-text2 hover:text-text1 transition-colors"
