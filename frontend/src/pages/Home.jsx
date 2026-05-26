@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CategoryTree from '../components/CategoryTree';
+import MobileCategoryDropdown from '../components/MobileCategoryDropdown';
 import Waterfall from '../components/Waterfall';
 import ProductEditModal from '../components/ProductEditModal';
 import { useCategories } from '../hooks/useCategories';
@@ -180,24 +181,7 @@ const Home = () => {
       <div className="flex-1 px-4 py-6 md:px-8">
         {/* 移动端分类选择 */}
         <div className="md:hidden mb-4">
-          <select
-            value={selectedCategory || ''}
-            onChange={(e) => {
-              const val = e.target.value || null;
-              setSelectedCategory(val);
-            }}
-            className="w-full px-4 py-2.5 bg-white border border-warm-border rounded-lg text-sm"
-          >
-            <option value="">全部好物</option>
-            {flatCategories.map((cat) => {
-              const locked = lockedIds.includes(cat.id);
-              return (
-                <option key={cat.id} value={cat.id}>
-                  {cat.label}{locked ? ' 🔒' : ''}
-                </option>
-              );
-            })}
-          </select>
+          <MobileCategoryDropdown selectedId={selectedCategory} onSelect={handleCategorySelect} />
         </div>
 
         {/* 页面标题 — markdown 模式下隐藏 */}

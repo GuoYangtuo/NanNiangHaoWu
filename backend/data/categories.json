@@ -1,11 +1,11 @@
 {
   "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
   "locked_category_ids": [
-    "clothing-dress-pajamas",
-    "nursing-face-antiaging",
-    "clothing-socks-pantyhose",
-    "nursing-mouth-mouthwash",
-    "adult-toys"
+    "nursing-face-wash",
+    "clothing-accessories-ear",
+    "nursing-body-lotion",
+    "nursing-face-moisturize",
+    "clothing-socks-knee"
   ],
   "random_schedule": {
     "enabled": true,
