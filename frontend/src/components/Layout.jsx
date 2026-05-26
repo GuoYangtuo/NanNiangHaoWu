@@ -147,13 +147,13 @@ const Layout = () => {
                               </span>
                             ) : (
                               <button
-                                onClick={openSubscriptionModal}
+                                //onClick={openSubscriptionModal}
                                 className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-warm-bg text-text2 hover:bg-primary/10 hover:text-primary transition-colors"
                               >
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                                 </svg>
-                                开通会员 ¥9.9/月
+                                开通会员 {/*¥9.9/月*/}
                               </button>
                             )}
                           </div>
@@ -201,7 +201,7 @@ const Layout = () => {
 
                         {!isActiveMember && (
                           <button
-                            onClick={openSubscriptionModal}
+                            //onClick={openSubscriptionModal}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors w-full text-left text-primary hover:bg-primary-light/50"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
