@@ -199,9 +199,9 @@ const Layout = () => {
                           我的审核
                         </button>
 
-                        {!isActiveMember && (
+                        {/*{!isActiveMember && (
                           <button
-                            //onClick={openSubscriptionModal}
+                            onClick={openSubscriptionModal}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors w-full text-left text-primary hover:bg-primary-light/50"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,6 +210,7 @@ const Layout = () => {
                             订阅会员
                           </button>
                         )}
+                        */}
 
                         {isAdmin && (
                           <Link
