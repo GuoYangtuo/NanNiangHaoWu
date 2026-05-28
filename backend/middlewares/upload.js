@@ -31,8 +31,9 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
-    files: 9 // 最多 9 张图片
+    fileSize: 10 * 1024 * 1024, // 10MB
+    files: 9, // 最多 9 张图片
+    fieldSize: 10 * 1024 * 1024 // 表单字段最大 10MB
   }
 });
 

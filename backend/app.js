@@ -81,7 +81,7 @@ app.use((err, req, res, next) => {
 
   if (err.name === 'MulterError') {
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ success: false, message: '文件大小超过限制（最大 5MB）' });
+      return res.status(400).json({ success: false, message: '文件大小超过限制（最大 10MB）' });
     }
     if (err.code === 'LIMIT_FILE_COUNT') {
       return res.status(400).json({ success: false, message: '图片数量超过限制（最多 9 张）' });

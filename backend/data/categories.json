@@ -2,10 +2,10 @@
   "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
   "locked_category_ids": [
     "nursing-face-wash",
-    "clothing-accessories-ear",
-    "nursing-body-lotion",
-    "nursing-face-moisturize",
-    "clothing-socks-knee"
+    "clothing-dress-softgirl",
+    "nursing-body-antiaging",
+    "adult-lingerie",
+    "clothing-socks-calf"
   ],
   "random_schedule": {
     "enabled": true,
@@ -268,6 +268,21 @@
               "id": "clothing-socks-ankle",
               "name": "短袜",
               "type": "leaf"
+            },
+            {
+              "id":"clothing-socks-strap",
+              "name":"吊带袜",
+              "type":"leaf"
+            },
+            {
+              "id":"clothing-socks-onepiece",
+              "name":"连体丝袜",
+              "type":"leaf"
+            },
+            {
+              "id":"clothing-socks-hand",
+              "name":"手丝",
+              "type":"leaf"
             }
           ]
         },
@@ -353,6 +368,23 @@
         {
           "id": "adult-lubes",
           "name": "润滑液 / 辅助用品",
+          "type": "leaf"
+        }
+      ]
+    },
+    {
+      "id": "folder-other",
+      "name": "其它",
+      "type": "folder",
+      "children": [
+        {
+          "id": "other-shooting-props",
+          "name": "拍摄道具",
+          "type": "leaf"
+        },
+        {
+          "id": "other-other",
+          "name": "其它",
           "type": "leaf"
         }
       ]
