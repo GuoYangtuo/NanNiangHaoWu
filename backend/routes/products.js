@@ -128,6 +128,63 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
+// GET /api/products/my-products - 获取当前用户上传的商品（含审核状态）
+router.get('/my-products', authMiddleware, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    const { count, rows: products } = await Product.findAndCountAll({
+      where: { user_id: req.user.id },
+      order: [['created_at', 'DESC']],
+      limit: parseInt(limit),
+      offset
+    });
+
+    const processedProducts = products.map((p) => {
+      const cat = getCategoryById(p.category_id);
+      return {
+        id: p.id,
+        category_id: p.category_id,
+        name: p.name,
+        description: p.description,
+        purchase_link: p.purchase_link,
+        images: (p.images || []).map((img) => `/uploads/${img}`),
+        status: p.status,
+        category: cat ? { id: cat.id, name: cat.name } : null,
+        created_at: p.created_at,
+        average_rating: parseFloat(p.average_rating) || 0,
+        review_count: p.review_count || 0
+      };
+    });
+
+    const statusCounts = await Product.findAll({
+      where: { user_id: req.user.id },
+      attributes: ['status', [require('sequelize').fn('COUNT', require('sequelize').col('status')), 'count']],
+      group: ['status']
+    });
+
+    const counts = { pending: 0, approved: 0, rejected: 0 };
+    statusCounts.forEach((r) => {
+      if (r.status in counts) counts[r.status] = parseInt(r.get('count'));
+    });
+
+    return success(res, {
+      products: processedProducts,
+      counts,
+      pagination: {
+        total: count,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(count / parseInt(limit))
+      }
+    });
+  } catch (err) {
+    logger.error('Products', '获取我的商品失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
 // GET /api/products/:id - 获取商品详情
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
@@ -316,63 +373,6 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     return success(res, null, '删除成功');
   } catch (err) {
     logger.error('Products', '删除商品失败', { error: err.message });
-    return serverError(res, '服务器错误');
-  }
-});
-
-// GET /api/products/my-products - 获取当前用户上传的商品（含审核状态）
-router.get('/my-products', authMiddleware, async (req, res) => {
-  try {
-    const { page = 1, limit = 20 } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-
-    const { count, rows: products } = await Product.findAndCountAll({
-      where: { user_id: req.user.id },
-      order: [['created_at', 'DESC']],
-      limit: parseInt(limit),
-      offset
-    });
-
-    const processedProducts = products.map((p) => {
-      const cat = getCategoryById(p.category_id);
-      return {
-        id: p.id,
-        category_id: p.category_id,
-        name: p.name,
-        description: p.description,
-        purchase_link: p.purchase_link,
-        images: (p.images || []).map((img) => `/uploads/${img}`),
-        status: p.status,
-        category: cat ? { id: cat.id, name: cat.name } : null,
-        created_at: p.created_at,
-        average_rating: parseFloat(p.average_rating) || 0,
-        review_count: p.review_count || 0
-      };
-    });
-
-    const statusCounts = await Product.findAll({
-      where: { user_id: req.user.id },
-      attributes: ['status', [require('sequelize').fn('COUNT', require('sequelize').col('status')), 'count']],
-      group: ['status']
-    });
-
-    const counts = { pending: 0, approved: 0, rejected: 0 };
-    statusCounts.forEach((r) => {
-      if (r.status in counts) counts[r.status] = parseInt(r.get('count'));
-    });
-
-    return success(res, {
-      products: processedProducts,
-      counts,
-      pagination: {
-        total: count,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(count / parseInt(limit))
-      }
-    });
-  } catch (err) {
-    logger.error('Products', '获取我的商品失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });
