@@ -133,11 +133,11 @@ const Layout = () => {
                     {menuOpen && (
                       <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-warm-border py-2 z-50">
                         {/* 用户信息 */}
-                        <div className="px-4 py-3 border-b border-warm-border">
-                          <p className="text-sm font-semibold text-text1">{user.username}</p>
-                          <p className="text-xs text-text2 mt-0.5">{user.email || '用户'}</p>
+                        <div className="px-4 pb-1 pt-1">
+                          <p className="text-base font-bold text-text1">{user.username}</p>
+                          <p className="text-xs text-text2 mt-0.5 font-mono">UUID: {user.id}</p>
                           {/* 会员状态 */}
-                          <div className="mt-1.5">
+                          <div className="mt-1">
                             {isActiveMember ? (
                               <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
                                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
