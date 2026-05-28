@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { getFavorites, removeFavorite } from '../api/favorites';
 import { SubscriptionModal } from './SubscriptionModal';
 import { ProductReviewStatusModal } from './ProductReviewStatusModal';
+import EditNicknameModal from './EditNicknameModal';
 
 const Layout = () => {
   const { user, logout, isAdmin, isActiveMember, fetchUser } = useAuth();
@@ -14,6 +15,7 @@ const Layout = () => {
   const [favoritesModalOpen, setFavoritesModalOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [reviewStatusModalOpen, setReviewStatusModalOpen] = useState(false);
+  const [editNicknameModalOpen, setEditNicknameModalOpen] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const hideTimer = useRef(null);
@@ -134,7 +136,18 @@ const Layout = () => {
                       <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-warm-border py-2 z-50">
                         {/* 用户信息 */}
                         <div className="px-4 pb-1 pt-1">
-                          <p className="text-base font-bold text-text1">{user.username}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-base font-bold text-text1">{user.username}</p>
+                            <button
+                              onClick={() => { setMenuOpen(false); setEditNicknameModalOpen(true); }}
+                              className="w-7 h-7 flex items-center justify-center rounded-full text-text2 hover:text-primary hover:bg-primary/10 transition-colors"
+                              title="修改昵称"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                            </button>
+                          </div>
                           <p className="text-xs text-text2 mt-0.5 font-mono">UUID: {user.id}</p>
                           {/* 会员状态 */}
                           <div className="mt-1">
@@ -377,6 +390,16 @@ const Layout = () => {
       {reviewStatusModalOpen && (
         <ProductReviewStatusModal
           onClose={() => setReviewStatusModalOpen(false)}
+        />
+      )}
+
+      {/* 修改昵称弹窗 */}
+      {editNicknameModalOpen && (
+        <EditNicknameModal
+          onClose={() => setEditNicknameModalOpen(false)}
+          onSuccess={() => {
+            fetchUser();
+          }}
         />
       )}
     </div>

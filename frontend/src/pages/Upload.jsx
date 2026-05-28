@@ -346,7 +346,7 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              图片 <span className="text-red-500">*</span>
+              图片（建议上传自己使用或上身效果图哦！） <span className="text-red-500">*</span>
             </label>
             <ImageUpload images={images} onChange={setImages} maxImages={9} />
             {images.length === 0 && (

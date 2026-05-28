@@ -218,4 +218,60 @@ router.get('/check-email', async (req, res) => {
   }
 });
 
+// PUT /api/auth/nickname - 修改昵称
+router.put('/nickname', authMiddleware, async (req, res) => {
+  try {
+    const { nickname } = req.body;
+
+    if (!nickname || typeof nickname !== 'string') {
+      return badRequest(res, '请输入昵称');
+    }
+
+    const trimmed = nickname.trim();
+    if (trimmed.length < 2 || trimmed.length > 50) {
+      return badRequest(res, '昵称长度需在 2-50 个字符之间');
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return unauthorized(res, '用户不存在');
+    }
+
+    if (user.status === 'banned') {
+      return unauthorized(res, '账号已被封禁');
+    }
+
+    // 检查昵称是否已被他人使用（排除自己）
+    const existing = await User.findOne({
+      where: {
+        username: trimmed,
+        id: { [require('sequelize').Op.ne]: req.user.id }
+      }
+    });
+    if (existing) {
+      return conflict(res, '该昵称已被使用');
+    }
+
+    user.username = trimmed;
+    await user.save();
+
+    logger.info('Auth', `用户 ${user.id} 修改昵称为: ${trimmed}`);
+
+    return success(res, {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      is_subscribed: user.is_subscribed,
+      subscription_expires_at: user.subscription_expires_at,
+      member_expires_at: user.member_expires_at,
+      is_active_member: user.role === 'admin' || user.is_subscribed ||
+        (user.member_expires_at && new Date(user.member_expires_at) > new Date())
+    }, '昵称修改成功');
+  } catch (err) {
+    logger.error('Auth', '修改昵称失败', { error: err.message });
+    return serverError(res, '服务器错误，请稍后重试');
+  }
+});
+
 module.exports = router;

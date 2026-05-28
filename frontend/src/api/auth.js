@@ -15,3 +15,7 @@ export const getCurrentUser = () => {
 export const checkEmail = (email) => {
   return api.get('/auth/check-email', { params: { email } });
 };
+
+export const updateNickname = (nickname) => {
+  return api.put('/auth/nickname', { nickname });
+};
