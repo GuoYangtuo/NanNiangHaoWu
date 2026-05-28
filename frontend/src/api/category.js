@@ -27,3 +27,7 @@ export const randomizeAdminLock = (count) => {
 export const updateAdminRandomSchedule = (schedule) => {
   return api.put('/categories/admin/random-schedule', schedule);
 };
+
+export const updateAdminNoReviewMode = (enabled) => {
+  return api.put('/categories/admin/no-review-mode', { enabled });
+};

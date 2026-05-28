@@ -5,7 +5,11 @@ const path = require('path');
 
 const categoriesPath = path.join(__dirname, 'categories.json');
 
-let meta = { locked_category_ids: [], random_schedule: { enabled: false, period_hours: 24, lock_count: 3 } };
+let meta = {
+  locked_category_ids: [],
+  random_schedule: { enabled: false, period_hours: 24, lock_count: 3 },
+  no_review_mode: false
+};
 let CATEGORY_TREE = [];
 
 const loadData = () => {
@@ -13,7 +17,8 @@ const loadData = () => {
   const data = JSON.parse(rawData);
   meta = {
     locked_category_ids: Array.isArray(data.locked_category_ids) ? data.locked_category_ids : [],
-    random_schedule: data.random_schedule || { enabled: false, period_hours: 24, lock_count: 3 }
+    random_schedule: data.random_schedule || { enabled: false, period_hours: 24, lock_count: 3 },
+    no_review_mode: !!data.no_review_mode
   };
   CATEGORY_TREE = data._categories || [];
 };
@@ -66,6 +71,7 @@ const saveLockData = () => {
   const data = JSON.parse(rawData);
   data.locked_category_ids = meta.locked_category_ids;
   data.random_schedule = meta.random_schedule;
+  data.no_review_mode = meta.no_review_mode;
   fs.writeFileSync(categoriesPath, JSON.stringify(data, null, 2), 'utf-8');
 };
 
@@ -76,6 +82,13 @@ const setLockedIds = (ids) => {
 
 const setRandomSchedule = (schedule) => {
   meta.random_schedule = { ...meta.random_schedule, ...schedule };
+  saveLockData();
+};
+
+const getNoReviewMode = () => meta.no_review_mode;
+
+const setNoReviewMode = (enabled) => {
+  meta.no_review_mode = !!enabled;
   saveLockData();
 };
 
@@ -102,5 +115,7 @@ module.exports = {
   setRandomSchedule,
   getLeafIds,
   getExcludedLeafIds,
+  getNoReviewMode,
+  setNoReviewMode,
   reload
 };

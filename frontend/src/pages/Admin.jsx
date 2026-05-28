@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { getAdminProducts, verifyProduct, deleteAdminProduct, impersonateUser } from '../api/admin';
 import { getAdminUsers, updateUserStatus } from '../api/admin';
 import { getAdminContentEdits, verifyContentEdit } from '../api/admin';
-import { getAdminLockConfig, updateAdminLock, randomizeAdminLock, updateAdminRandomSchedule } from '../api/category';
+import { getAdminLockConfig, updateAdminLock, randomizeAdminLock, updateAdminRandomSchedule, updateAdminNoReviewMode } from '../api/category';
 import CategoryLockTree from '../components/CategoryLockTree';
 import { STATUS_COLORS } from '../utils/constants';
 import ProductEditModal from '../components/ProductEditModal';
@@ -19,12 +19,13 @@ const Admin = () => {
   const [reviewEditProduct, setReviewEditProduct] = useState(null); // 审核 tab 编辑
 
   // 锁定管理状态
-  const [lockConfig, setLockConfig] = useState({ lockedIds: [], randomSchedule: { enabled: false, period_hours: 24, lock_count: 3 }, leafIds: [] });
+  const [lockConfig, setLockConfig] = useState({ lockedIds: [], randomSchedule: { enabled: false, period_hours: 24, lock_count: 3 }, leafIds: [], noReviewMode: false });
   const [lockLoading, setLockLoading] = useState(false);
   const [lockSaving, setLockSaving] = useState(false);
   const [randomPeriodHours, setRandomPeriodHours] = useState(24);
   const [randomLockCount, setRandomLockCount] = useState(3);
   const [randomEnabled, setRandomEnabled] = useState(false);
+  const [noReviewMode, setNoReviewMode] = useState(false);
 
   const tabs = [
     { id: 'review', label: '商品审核', badge: null },
@@ -95,11 +96,13 @@ const Admin = () => {
       setLockConfig({
         lockedIds: data.lockedIds || [],
         randomSchedule: data.randomSchedule || { enabled: false, period_hours: 24, lock_count: 3 },
-        leafIds: data.leafIds || []
+        leafIds: data.leafIds || [],
+        noReviewMode: data.noReviewMode || false
       });
       setRandomPeriodHours(data.randomSchedule?.period_hours || 24);
       setRandomLockCount(data.randomSchedule?.lock_count || 3);
       setRandomEnabled(data.randomSchedule?.enabled || false);
+      setNoReviewMode(data.noReviewMode || false);
     } catch (err) {
       console.error('获取锁定配置失败:', err);
     } finally {
@@ -270,6 +273,24 @@ const Admin = () => {
       alert('定时随机锁定配置已保存');
     } catch (err) {
       alert(err.message || '保存失败');
+    } finally {
+      setLockSaving(false);
+    }
+  };
+
+  // 切换无审核模式
+  const handleToggleNoReviewMode = async () => {
+    const newValue = !noReviewMode;
+    const action = newValue ? '开启' : '关闭';
+    if (!confirm(`确定要${action}无审核模式吗？${newValue ? '所有待审核商品将自动通过审核。' : ''}`)) return;
+
+    setLockSaving(true);
+    try {
+      await updateAdminNoReviewMode(newValue);
+      setNoReviewMode(newValue);
+      alert(action === '开启' ? '无审核模式已开启' : '无审核模式已关闭');
+    } catch (err) {
+      alert(err.message || '操作失败');
     } finally {
       setLockSaving(false);
     }
@@ -659,6 +680,37 @@ const Admin = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* 无审核模式 */}
+                    <div className="bg-white rounded-xl shadow-card p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="text-base font-bold text-text1">无审核模式</h3>
+                          <p className="text-xs text-text2 mt-1">开启后，新上传的好物将自动通过审核，无需人工审核</p>
+                        </div>
+                        <label className="flex items-center gap-2 cursor-pointer select-none">
+                          <div
+                            className={`relative w-12 h-6 rounded-full transition-colors ${noReviewMode ? 'bg-emerald-500' : 'bg-gray-300'}`}
+                          >
+                            <div
+                              className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                                noReviewMode ? 'translate-x-7' : 'translate-x-1'
+                              }`}
+                            />
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={noReviewMode}
+                            onChange={handleToggleNoReviewMode}
+                            className="sr-only"
+                            disabled={lockSaving}
+                          />
+                          <span className={`text-sm font-medium ${noReviewMode ? 'text-emerald-600' : 'text-text2'}`}>
+                            {lockSaving ? '处理中...' : (noReviewMode ? '已开启' : '已关闭')}
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+
                     {/* 手动锁定 */}
                     <div className="bg-white rounded-xl shadow-card p-6">
                       <div className="flex items-center justify-between mb-4">

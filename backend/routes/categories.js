@@ -2,7 +2,7 @@
 
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const { CATEGORY_TREE, isValidCategory, isLocked, getLockedIds, getRandomSchedule, setLockedIds, setRandomSchedule, getLeafIds, reload: reloadCategories } = require('../data/categories');
+const { CATEGORY_TREE, isValidCategory, isLocked, getLockedIds, getRandomSchedule, setLockedIds, setRandomSchedule, getLeafIds, reload: reloadCategories, getNoReviewMode, setNoReviewMode } = require('../data/categories');
 const { success, badRequest, notFound, serverError } = require('../utils/response');
 const logger = require('../utils/logger');
 const { authMiddleware } = require('../middlewares/auth');
@@ -53,7 +53,8 @@ router.get('/admin/lock-config', authMiddleware, async (req, res) => {
     return success(res, {
       lockedIds: getLockedIds(),
       randomSchedule: getRandomSchedule(),
-      leafIds: getLeafIds()
+      leafIds: getLeafIds(),
+      noReviewMode: getNoReviewMode()
     });
   } catch (err) {
     logger.error('CategoryLock', '获取锁定配置失败', { error: err.message });
@@ -135,6 +136,38 @@ router.put('/admin/random-schedule', authMiddleware, async (req, res) => {
     return success(res, { randomSchedule: getRandomSchedule() }, '定时随机锁定配置已更新');
   } catch (err) {
     logger.error('CategoryLock', '更新随机锁定配置失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// PUT /api/categories/admin/no-review-mode - 开启/关闭无审核模式
+router.put('/admin/no-review-mode', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: '需要管理员权限' });
+    }
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') {
+      return badRequest(res, 'enabled 必须是布尔值');
+    }
+
+    setNoReviewMode(enabled);
+
+    if (enabled) {
+      // 开启时：将所有待审核商品自动设为通过
+      const Product = require('../models/Product');
+      const pendingProducts = await Product.findAll({ where: { status: 'pending' } });
+      for (const p of pendingProducts) {
+        await p.update({ status: 'approved' });
+      }
+      logger.info('CategoryLock', `管理员 ${req.user.username} 开启了无审核模式，批量通过了 ${pendingProducts.length} 个待审核商品`);
+    } else {
+      logger.info('CategoryLock', `管理员 ${req.user.username} 关闭了无审核模式`);
+    }
+
+    return success(res, { noReviewMode: enabled }, enabled ? '无审核模式已开启，所有待审核商品已自动通过' : '无审核模式已关闭');
+  } catch (err) {
+    logger.error('CategoryLock', '更新无审核模式失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });

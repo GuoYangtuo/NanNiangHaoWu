@@ -6,7 +6,7 @@ const Review = require('../models/Review');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const { authMiddleware, optionalAuth } = require('../middlewares/auth');
-const { isValidCategory, getCategoryById, CATEGORY_TREE, getExcludedLeafIds } = require('../data/categories');
+const { isValidCategory, getCategoryById, CATEGORY_TREE, getExcludedLeafIds, getNoReviewMode } = require('../data/categories');
 const upload = require('../middlewares/upload');
 const { success, badRequest, notFound, serverError, forbidden } = require('../utils/response');
 const logger = require('../utils/logger');
@@ -190,6 +190,10 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
 
     const images = (req.files || []).map((file) => file.filename);
 
+    // 无审核模式：自动通过
+    const noReviewMode = getNoReviewMode();
+    const initialStatus = noReviewMode ? 'approved' : 'pending';
+
     const product = await Product.create({
       category_id,
       user_id: req.user.id,
@@ -197,7 +201,7 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
       description: description ? description.trim() : null,
       purchase_link: purchase_link ? purchase_link.trim() : null,
       images,
-      status: 'pending'
+      status: initialStatus
     });
 
     // 如果上传时提供了评分，自动为上传者创建一条仅有评分的评价（待审核商品默认不计入平均分）
@@ -209,9 +213,12 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
         rating: ratingInt,
         comment: ''
       });
-      // 商品审核通过前，不更新平均分；审核通过后再计算
       await product.update({ average_rating: ratingInt, review_count: 1 });
-      logger.info('Products', `用户 ${req.user.username} 上传好物并自带评分 ${ratingInt} 星`);
+    }
+
+    if (noReviewMode) {
+      logger.info('Products', `无审核模式开启，用户 ${req.user.username} 上传好物自动通过: ${name}`);
+      return success(res, { id: product.id, status: 'approved' }, '提交成功，好物已自动通过审核');
     }
 
     logger.info('Products', `用户 ${req.user.username} 创建了新推荐好物: ${name}`);

@@ -1,17 +1,12 @@
 {
-  "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置",
-  "locked_category_ids": [
-    "nursing-face-wash",
-    "clothing-dress-softgirl",
-    "nursing-body-antiaging",
-    "adult-lingerie",
-    "clothing-socks-calf"
-  ],
+  "_comment": "locked_category_ids - 手动锁定的分类ID列表（folder和leaf均可）；random_schedule - 定时随机锁定配置；no_review_mode - 无审核模式，开启后新上传商品自动通过",
+  "locked_category_ids": [],
   "random_schedule": {
-    "enabled": true,
+    "enabled": false,
     "period_hours": 1,
     "lock_count": 5
   },
+  "no_review_mode": true,
   "_categories": [
     {
       "id": "folder-nursing",
@@ -270,19 +265,19 @@
               "type": "leaf"
             },
             {
-              "id":"clothing-socks-strap",
-              "name":"吊带袜",
-              "type":"leaf"
+              "id": "clothing-socks-strap",
+              "name": "吊带袜",
+              "type": "leaf"
             },
             {
-              "id":"clothing-socks-onepiece",
-              "name":"连体丝袜",
-              "type":"leaf"
+              "id": "clothing-socks-onepiece",
+              "name": "连体丝袜",
+              "type": "leaf"
             },
             {
-              "id":"clothing-socks-hand",
-              "name":"手丝",
-              "type":"leaf"
+              "id": "clothing-socks-hand",
+              "name": "手丝",
+              "type": "leaf"
             }
           ]
         },
