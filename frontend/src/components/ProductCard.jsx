@@ -62,23 +62,23 @@ const ProductCard = ({ product, onEdit }) => {
       </div>
 
       {/* 内容区域 */}
-      <div className="p-4">
-        <h3 className="text-sm font-medium text-text1 line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+      <div className="p-2 sm:p-3">
+        <h3 className="text-xs sm:text-sm font-medium text-text1 line-clamp-2 mb-1 sm:mb-1.5 group-hover:text-primary transition-colors">
           {name}
         </h3>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-1">
           {category && (
-            <span className="text-xs px-2 py-1 bg-primary-light/60 text-primary-dark rounded-md">
+            <span className="text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 bg-primary-light/60 text-primary-dark rounded-md truncate">
               {category.name}
             </span>
           )}
           {average_rating > 0 && (() => {
             const label = getRatingLabel(average_rating);
             return (
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-text2/60">{review_count}人评价</span>
-                <RatingIcon rating={average_rating} size={18} />
+              <div className="flex items-center gap-0.5 sm:gap-1">
+                <span className="text-xs text-text2/60 hidden sm:inline">{review_count}人评价</span>
+                <RatingIcon rating={average_rating} size={14} />
                 {label && <span className={`text-xs font-semibold ${label.color}`}>{label.label}</span>}
               </div>
             );

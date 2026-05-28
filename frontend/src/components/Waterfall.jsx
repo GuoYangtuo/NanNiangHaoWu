@@ -10,7 +10,7 @@ const Waterfall = ({ products, loading, onLoadMore, hasMore, onEdit }) => {
     const updateColumns = () => {
       const width = window.innerWidth;
       if (width < 640) {
-        setColumns(1);
+        setColumns(2);
       } else if (width < 1024) {
         setColumns(2);
       } else {
@@ -63,11 +63,11 @@ const Waterfall = ({ products, loading, onLoadMore, hasMore, onEdit }) => {
       ) : (
         <>
           <div
-            className="grid gap-4"
+            className="grid gap-2 sm:gap-4"
             style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
           >
             {columnData.map((column, colIndex) => (
-              <div key={colIndex} className="space-y-4">
+              <div key={colIndex} className="space-y-2 sm:space-y-4">
                 {column.map((product) => (
                   <ProductCard key={product.id} product={product} onEdit={onEdit} />
                 ))}
