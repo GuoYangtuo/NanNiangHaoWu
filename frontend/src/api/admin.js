@@ -35,3 +35,7 @@ export const getAdminContentEdits = (params) => {
 export const verifyContentEdit = (id, status) => {
   return api.put(`/admin/content-edits/${id}/verify`, { status });
 };
+
+export const impersonateUser = (id) => {
+  return api.post(`/admin/users/${id}/impersonate`);
+};

@@ -1,6 +1,8 @@
 'use strict';
 
 const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const User = require('../models/User');
@@ -15,6 +17,20 @@ const fs = require('fs');
 const path = require('path');
 
 const router = express.Router();
+
+// 生成 JWT token（抽取为公共函数，供多处使用）
+const generateToken = (user) => {
+  return jwt.sign(
+    {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+};
 
 // 所有管理路由都需要管理员权限
 router.use(authMiddleware, adminMiddleware);
@@ -464,6 +480,43 @@ router.put('/users/:id/status', [
     }, `用户已${status === 'banned' ? '封禁' : '解封'}`);
   } catch (err) {
     logger.error('Admin', '更新用户状态失败', { error: err.message });
+    return serverError(res, '服务器错误');
+  }
+});
+
+// POST /api/admin/users/:id/impersonate - 管理员快速登录用户账号
+router.post('/users/:id/impersonate', async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+
+    if (!user) {
+      return notFound(res, '用户不存在');
+    }
+
+    if (user.status === 'banned') {
+      return badRequest(res, '该账号已被封禁，无法登录');
+    }
+
+    const token = generateToken(user);
+
+    logger.info('Admin', `管理员 ${req.user.username} 快速登录为用户 ${user.username} (ID: ${user.id})`);
+
+    return success(res, {
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        is_subscribed: user.is_subscribed,
+        subscription_expires_at: user.subscription_expires_at,
+        member_expires_at: user.member_expires_at,
+        is_active_member: user.role === 'admin' || user.is_subscribed ||
+          (user.member_expires_at && new Date(user.member_expires_at) > new Date())
+      }
+    }, `已切换为 ${user.username}`);
+  } catch (err) {
+    logger.error('Admin', '快速登录失败', { error: err.message });
     return serverError(res, '服务器错误');
   }
 });

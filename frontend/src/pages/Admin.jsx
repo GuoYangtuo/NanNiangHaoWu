@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAdminProducts, verifyProduct, deleteAdminProduct } from '../api/admin';
+import { getAdminProducts, verifyProduct, deleteAdminProduct, impersonateUser } from '../api/admin';
 import { getAdminUsers, updateUserStatus } from '../api/admin';
 import { getAdminContentEdits, verifyContentEdit } from '../api/admin';
 import { getAdminLockConfig, updateAdminLock, randomizeAdminLock, updateAdminRandomSchedule } from '../api/category';
@@ -175,6 +175,27 @@ const Admin = () => {
     } catch (err) {
       alert(err.message || '操作失败');
     } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // 快速登录用户账号
+  const handleImpersonate = async (userId) => {
+    if (!confirm('确定要快速登录该用户账号吗？您将立即切换到该用户身份。')) return;
+
+    setActionLoading(userId);
+    try {
+      const res = await impersonateUser(userId);
+      const { token, user: userData } = res.data;
+
+      // 更新本地登录状态
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // 刷新页面回到首页
+      window.location.href = '/';
+    } catch (err) {
+      alert(err.message || '快速登录失败');
       setActionLoading(null);
     }
   };
@@ -404,19 +425,28 @@ const Admin = () => {
                           </td>
                           <td className="px-4 py-3 text-sm text-text2">{formatDate(user.created_at)}</td>
                           <td className="px-4 py-3">
-                            {user.role !== 'admin' && (
+                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => handleUpdateUserStatus(user.id, user.status === 'active' ? 'banned' : 'active')}
+                                onClick={() => handleImpersonate(user.id)}
                                 disabled={actionLoading === user.id}
-                                className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
-                                  user.status === 'active'
-                                    ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                    : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                                }`}
+                                className="text-xs px-2 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors disabled:opacity-50"
                               >
-                                {user.status === 'active' ? '封禁' : '解封'}
+                                快速登录
                               </button>
-                            )}
+                              {user.role !== 'admin' && (
+                                <button
+                                  onClick={() => handleUpdateUserStatus(user.id, user.status === 'active' ? 'banned' : 'active')}
+                                  disabled={actionLoading === user.id}
+                                  className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                                    user.status === 'active'
+                                      ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                      : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                                  }`}
+                                >
+                                  {user.status === 'active' ? '封禁' : '解封'}
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
