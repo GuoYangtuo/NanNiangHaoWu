@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { body, query, validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const Review = require('../models/Review');
 const ContentEdit = require('../models/ContentEdit');
 const { authMiddleware } = require('../middlewares/auth');
 const { adminMiddleware } = require('../middlewares/admin');
@@ -17,6 +18,29 @@ const fs = require('fs');
 const path = require('path');
 
 const router = express.Router();
+
+// 计算并更新商品平均评分
+const updateProductRating = async (productId) => {
+  const { fn, col } = require('sequelize');
+  const result = await Review.findAll({
+    where: { product_id: productId },
+    attributes: [
+      [fn('AVG', col('rating')), 'avgRating'],
+      [fn('COUNT', col('id')), 'count']
+    ],
+    raw: true
+  });
+
+  const avgRating = (result && result[0] && result[0].avgRating) ? parseFloat(result[0].avgRating) : 0;
+  const count = (result && result[0] && result[0].count) ? parseInt(result[0].count) : 0;
+
+  await Product.update(
+    { average_rating: avgRating, review_count: count },
+    { where: { id: productId } }
+  );
+
+  return { avgRating, count };
+};
 
 // 生成 JWT token（抽取为公共函数，供多处使用）
 const generateToken = (user) => {
@@ -113,6 +137,11 @@ router.put('/products/:id/verify', [
     }
 
     await product.update({ status });
+
+    // 当商品审核通过时，重新计算平均评分（可能包含上传者自带的评分）
+    if (status === 'approved') {
+      await updateProductRating(product.id);
+    }
 
     // 当商品被审核通过时，统计该用户已通过的商品数，每3个给一个月会员
     if (status === 'approved') {

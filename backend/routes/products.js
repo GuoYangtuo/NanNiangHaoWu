@@ -2,6 +2,7 @@
 
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
+const Review = require('../models/Review');
 const Product = require('../models/Product');
 const User = require('../models/User');
 const { authMiddleware, optionalAuth } = require('../middlewares/auth');
@@ -9,6 +10,29 @@ const { isValidCategory, getCategoryById, CATEGORY_TREE, getExcludedLeafIds } = 
 const upload = require('../middlewares/upload');
 const { success, badRequest, notFound, serverError, forbidden } = require('../utils/response');
 const logger = require('../utils/logger');
+
+// 计算并更新商品平均评分
+const updateProductRating = async (productId) => {
+  const { fn, col } = require('sequelize');
+  const result = await Review.findAll({
+    where: { product_id: productId },
+    attributes: [
+      [fn('AVG', col('rating')), 'avgRating'],
+      [fn('COUNT', col('id')), 'count']
+    ],
+    raw: true
+  });
+
+  const avgRating = (result && result[0] && result[0].avgRating) ? parseFloat(result[0].avgRating) : 0;
+  const count = (result && result[0] && result[0].count) ? parseInt(result[0].count) : 0;
+
+  await Product.update(
+    { average_rating: avgRating, review_count: count },
+    { where: { id: productId } }
+  );
+
+  return { avgRating, count };
+};
 
 const router = express.Router();
 
@@ -35,7 +59,11 @@ const createProductRules = [
   body('purchase_link')
     .optional()
     .isURL({ protocols: ['http', 'https'], require_protocol: true })
-    .withMessage('请输入有效的购买链接（需包含 http:// 或 https://）')
+    .withMessage('请输入有效的购买链接（需包含 http:// 或 https://）'),
+  body('rating')
+    .optional()
+    .isInt({ min: 1, max: 5 })
+    .withMessage('评分需在 1-5 之间')
 ];
 
 // GET /api/products - 获取已审核通过的商品列表
@@ -158,7 +186,7 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
       return badRequest(res, errors.array()[0].msg);
     }
 
-    const { category_id, name, description, purchase_link } = req.body;
+    const { category_id, name, description, purchase_link, rating } = req.body;
 
     const images = (req.files || []).map((file) => file.filename);
 
@@ -171,6 +199,20 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
       images,
       status: 'pending'
     });
+
+    // 如果上传时提供了评分，自动为上传者创建一条仅有评分的评价（待审核商品默认不计入平均分）
+    const ratingInt = rating ? parseInt(rating) : null;
+    if (ratingInt) {
+      await Review.create({
+        product_id: product.id,
+        user_id: req.user.id,
+        rating: ratingInt,
+        comment: ''
+      });
+      // 商品审核通过前，不更新平均分；审核通过后再计算
+      await product.update({ average_rating: ratingInt, review_count: 1 });
+      logger.info('Products', `用户 ${req.user.username} 上传好物并自带评分 ${ratingInt} 星`);
+    }
 
     logger.info('Products', `用户 ${req.user.username} 创建了新推荐好物: ${name}`);
 

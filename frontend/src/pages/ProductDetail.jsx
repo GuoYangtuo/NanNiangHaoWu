@@ -211,6 +211,9 @@ const ProductDetail = () => {
   // images 已经是完整路径，直接使用
   const actualImage = displayImage;
 
+  // 找到上传者自己的评分（在评论列表中）
+  const uploaderReview = reviews.find((r) => r.user?.id === product.user?.id);
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* 返回按钮 */}
@@ -358,15 +361,29 @@ const ProductDetail = () => {
           </div>
 
           {/* 推荐人信息 */}
-          <div className="flex items-center gap-3 pb-6 border-b border-warm-border">
-            <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center">
-              <span className="text-primary font-bold">
-                {product.user?.username?.charAt(0).toUpperCase() || 'N'}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-text1">{product.user?.username || '匿名用户'}</p>
-              <p className="text-xs text-text2">推荐于 {formatDate(product.created_at)}</p>
+          <div className="pb-6 border-b border-warm-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center">
+                <span className="text-primary font-bold">
+                  {product.user?.username?.charAt(0).toUpperCase() || 'N'}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text1">{product.user?.username || '匿名用户'}</p>
+                <p className="text-xs text-text2">推荐于 {formatDate(product.created_at)}</p>
+              </div>
+              {uploaderReview && (
+                <div className="ml-auto flex items-center gap-2">
+                  <RatingIcon rating={uploaderReview.rating} size={22} />
+                  {(() => {
+                    const label = getRatingLabel(uploaderReview.rating);
+                    return label ? (
+                      <span className={`text-sm font-semibold ${label.color}`}>{label.label}</span>
+                    ) : null;
+                  })()}
+                  <span className="text-xs text-text2/50">（上传者评分）</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -533,9 +550,14 @@ const ProductDetail = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-sm font-medium text-text1">
-                          {review.user?.username || '匿名用户'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-text1">
+                            {review.user?.username || '匿名用户'}
+                          </span>
+                          {product.user?.id === review.user?.id && (
+                            <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded font-medium">上传者</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2">
                           <RatingIcon rating={review.rating} size={14} />
                           {(() => {

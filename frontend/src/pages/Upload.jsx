@@ -4,6 +4,20 @@ import ImageUpload from '../components/ImageUpload';
 import { useCategories } from '../hooks/useCategories';
 import { createProduct } from '../api/product';
 
+const RATING_LABELS = [
+  { max: 1.5, label: '拉完了', color: 'text-gray-400' },
+  { max: 2.5, label: 'NPC', color: 'text-green-500' },
+  { max: 3.5, label: '人上人', color: 'text-blue-500' },
+  { max: 4.5, label: '顶级', color: 'text-purple-500' },
+  { max: 5.0, label: '夯爆了', color: 'text-red-500' },
+];
+
+const getRatingLabel = (rating) => {
+  const r = parseFloat(rating);
+  if (r <= 0) return null;
+  return RATING_LABELS.find((l) => r <= l.max) || RATING_LABELS[RATING_LABELS.length - 1];
+};
+
 const flattenCategories = (nodes, ancestors = []) => {
   const result = [];
   for (const node of nodes) {
@@ -156,6 +170,8 @@ const Upload = () => {
     purchase_link: ''
   });
   const [images, setImages] = useState([]);
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -205,6 +221,9 @@ const Upload = () => {
       formData.append('name', form.name.trim());
       formData.append('description', form.description.trim());
       formData.append('purchase_link', form.purchase_link.trim());
+      if (rating > 0) {
+        formData.append('rating', rating);
+      }
 
       const newImages = images.filter((img) => img.isNew);
       newImages.forEach((img) => {
@@ -333,6 +352,50 @@ const Upload = () => {
             {images.length === 0 && (
               <p className="mt-1 text-xs text-red-500">请至少上传一张图片</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text1 mb-1.5">
+              你的评分
+            </label>
+            <p className="text-xs text-text2 mb-2">给这个好物打个分吧！上传后会自动生成一条你的评分记录~</p>
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-flex items-center gap-1"
+                onMouseLeave={() => setHoverRating(0)}
+              >
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star === rating ? 0 : star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    className="transition-transform hover:scale-110"
+                    title={`${star}星`}
+                  >
+                    <img
+                      src="/evaluationIcon.png"
+                      alt={`${star}星`}
+                      className="block"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        opacity: (hoverRating || rating) >= star ? 1 : 0.3,
+                        filter: (hoverRating || rating) >= star ? 'none' : 'grayscale(100%)'
+                      }}
+                    />
+                  </button>
+                ))}
+              </span>
+              {(hoverRating || rating) > 0 && (() => {
+                const label = getRatingLabel(hoverRating || rating);
+                return label ? (
+                  <span className={`text-sm font-semibold ${label.color}`}>
+                    {label.label}
+                  </span>
+                ) : null;
+              })()}
+            </div>
           </div>
 
           <div className="pt-4">
