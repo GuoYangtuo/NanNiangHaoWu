@@ -144,7 +144,7 @@ const CategoryBranch = ({ node, path, onSelect, selectedId }) => {
   );
 };
 
-const ProductEditModal = ({ product, onClose, onSuccess }) => {
+const ProductEditModal = ({ product, onClose, onSuccess, onAfterSave }) => {
   const { categories, loading: categoriesLoading } = useCategories();
 
   const getInitialImages = () => {
@@ -213,6 +213,12 @@ const ProductEditModal = ({ product, onClose, onSuccess }) => {
       await updateAdminProduct(product.id, formData);
 
       onSuccess?.();
+
+      if (onAfterSave) {
+        const shouldApprove = window.confirm('商品已保存，是否立即通过审核？');
+        onAfterSave(shouldApprove);
+      }
+
       onClose();
     } catch (err) {
       setError(err.message || '保存失败，请稍后重试');

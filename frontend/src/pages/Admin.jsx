@@ -16,6 +16,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [editModalProduct, setEditModalProduct] = useState(null);
+  const [reviewEditProduct, setReviewEditProduct] = useState(null); // 审核 tab 编辑
 
   // 锁定管理状态
   const [lockConfig, setLockConfig] = useState({ lockedIds: [], randomSchedule: { enabled: false, period_hours: 24, lock_count: 3 }, leafIds: [] });
@@ -163,6 +164,16 @@ const Admin = () => {
   const handleEditSuccess = () => {
     if (activeTab === 'products') {
       fetchAllProducts();
+    }
+  };
+
+  // 审核 Tab 编辑后通过回调
+  const handleReviewEditAfterSave = async (shouldApprove) => {
+    if (shouldApprove && reviewEditProduct) {
+      setReviewEditProduct(null);
+      await handleVerify(reviewEditProduct.id, 'approved');
+    } else {
+      setReviewEditProduct(null);
     }
   };
 
@@ -324,7 +335,7 @@ const Admin = () => {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {products.map((product) => (
-                      <div key={product.id} className="bg-white rounded-xl shadow-card overflow-hidden">
+                      <div key={product.id} className="bg-white rounded-xl shadow-card overflow-hidden flex flex-col">
                         {/* 图片 */}
                         <div className="aspect-[4/3] bg-warm-border">
                           {product.images && product.images.length > 0 ? (
@@ -346,17 +357,41 @@ const Admin = () => {
                         </div>
 
                         {/* 内容 */}
-                        <div className="p-4">
-                          <h3 className="text-sm font-medium text-text1 line-clamp-2 mb-2">{product.name}</h3>
-                          <p className="text-xs text-text2 mb-3">
-                            推荐人：{product.user?.username || '未知'} · {formatDate(product.created_at)}
+                        <div className="p-4 flex flex-col flex-1">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="text-sm font-medium text-text1 line-clamp-2 flex-1">{product.name}</h3>
+                            <span className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${product.category?.name ? 'bg-warm-bg text-text2' : 'bg-warm-bg text-text2/50'}`}>
+                              {product.category?.name || '未分类'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-text2 mb-2">
+                            {product.user?.username || '未知'} · {formatDate(product.created_at)}
                           </p>
-                          {product.description && (
-                            <p className="text-xs text-text2/80 line-clamp-2 mb-3">{product.description}</p>
+                          {product.description ? (
+                            <p className="text-xs text-text2/80 line-clamp-3 mb-3 flex-1">{product.description}</p>
+                          ) : (
+                            <p className="text-xs text-text2/40 italic mb-3 flex-1">暂无描述</p>
+                          )}
+                          {product.purchase_link && (
+                            <a
+                              href={product.purchase_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-primary hover:underline mb-3 truncate block"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {product.purchase_link}
+                            </a>
                           )}
 
                           {/* 操作按钮 */}
-                          <div className="flex gap-2 mt-3">
+                          <div className="flex gap-2 mt-auto">
+                            <button
+                              onClick={() => setReviewEditProduct(product)}
+                              className="flex-1 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors"
+                            >
+                              查看详情
+                            </button>
                             <button
                               onClick={() => handleVerify(product.id, 'approved')}
                               disabled={actionLoading === product.id}
@@ -367,7 +402,7 @@ const Admin = () => {
                             <button
                               onClick={() => handleVerify(product.id, 'rejected')}
                               disabled={actionLoading === product.id}
-                              className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                              className="py-2 px-3 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
                             >
                               拒绝
                             </button>
@@ -735,12 +770,24 @@ const Admin = () => {
         )}
       </div>
 
-      {/* 商品编辑弹窗 */}
+      {/* 商品编辑弹窗（商品管理 Tab） */}
       {editModalProduct && (
         <ProductEditModal
           product={editModalProduct}
           onClose={() => setEditModalProduct(null)}
           onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* 商品详情/编辑弹窗（审核 Tab） */}
+      {reviewEditProduct && (
+        <ProductEditModal
+          product={reviewEditProduct}
+          onClose={() => setReviewEditProduct(null)}
+          onSuccess={() => {
+            // 审核 Tab 不走这里，通过 onAfterSave 处理
+          }}
+          onAfterSave={handleReviewEditAfterSave}
         />
       )}
     </div>
