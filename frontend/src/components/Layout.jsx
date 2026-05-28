@@ -103,11 +103,11 @@ const Layout = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 flex-shrink min-w-0">
               <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
                 <img src="/favicon.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="text-xl font-bold text-text1 hidden sm:block">
+              <span className="text-xl font-bold text-text1 truncate max-w-[12rem]">
                 {SITE_NAME}
               </span>
             </Link>

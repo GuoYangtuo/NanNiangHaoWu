@@ -26,7 +26,7 @@ const ProductCard = ({ product, onEdit }) => {
   return (
     <Link
       to={`/product/${id}`}
-      className="group block bg-white rounded-xl shadow-card overflow-hidden transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1"
+      className="group block bg-white rounded-xl shadow-card overflow-hidden transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 min-w-0"
     >
       {/* 图片区域 */}
       <div className="relative aspect-[4/3] overflow-hidden bg-warm-border">

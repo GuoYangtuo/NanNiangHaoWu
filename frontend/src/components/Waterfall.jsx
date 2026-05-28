@@ -64,7 +64,7 @@ const Waterfall = ({ products, loading, onLoadMore, hasMore, onEdit }) => {
         <>
           <div
             className="grid gap-2 sm:gap-4"
-            style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+            style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
           >
             {columnData.map((column, colIndex) => (
               <div key={colIndex} className="space-y-2 sm:space-y-4">
