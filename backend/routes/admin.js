@@ -205,6 +205,8 @@ router.delete('/products/:id', async (req, res) => {
       });
     }
 
+    // 先删除关联的评论，再删除商品
+    await Review.destroy({ where: { product_id: product.id } });
     await product.destroy();
 
     logger.info('Admin', `管理员删除了商品: ${product.name}`);

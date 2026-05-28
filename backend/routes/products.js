@@ -307,6 +307,8 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       });
     }
 
+    // 先删除关联的评论，再删除商品
+    await Review.destroy({ where: { product_id: product.id } });
     await product.destroy();
 
     logger.info('Products', `用户 ${req.user.username} 删除了商品: ${product.name}`);
