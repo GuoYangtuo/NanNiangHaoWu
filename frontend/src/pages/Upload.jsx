@@ -331,7 +331,7 @@ const Upload = () => {
               onChange={handleChange}
               placeholder={recommendType === 'specific'
                 ? '建议直接粘贴电商平台商品名称'
-                : '淘宝杂牌xx / 某家女装店或品牌 等'}
+                : '拼多多杂牌xx / 某淘宝店铺或品牌 等'}
               maxLength={200}
               className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-colors ${
                 fieldErrors.name ? 'border-red-400' : 'border-warm-border'
@@ -390,7 +390,7 @@ const Upload = () => {
             <label className="block text-sm font-medium text-text1 mb-1.5">
               {recommendType === 'specific'
                 ? '图片（建议上传自己使用或上身效果图哦！）'
-                : '相关图片（踩坑经历等）'} <span className="text-red-500">*</span>
+                : '相关图片（上身效果，踩坑经历等）'} <span className="text-red-500">*</span>
             </label>
             <ImageUpload images={images} onChange={setImages} maxImages={9} />
             {images.length === 0 && (
