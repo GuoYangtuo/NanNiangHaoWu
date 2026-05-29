@@ -175,6 +175,7 @@ const Upload = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [recommendType, setRecommendType] = useState('specific');
 
   const validate = () => {
     const errors = {};
@@ -184,19 +185,23 @@ const Upload = () => {
     }
 
     if (!form.name.trim()) {
-      errors.name = '请输入商品名称';
+      errors.name = recommendType === 'specific' ? '请输入商品名称' : '请输入某一类/某家店的产品';
     } else if (form.name.length > 200) {
-      errors.name = '商品名称不能超过 200 个字符';
+      errors.name = (recommendType === 'specific' ? '商品名称' : '产品信息') + '不能超过 200 个字符';
     }
 
     if (!form.description.trim()) {
-      errors.description = '请输入使用感受或推荐理由';
+      errors.description = recommendType === 'specific'
+        ? '请输入使用感受或推荐理由'
+        : '请输入主要购买途径、类目特征、吐槽/谩骂、推荐/避雷理由等';
     }
 
-    if (!form.purchase_link.trim()) {
-      errors.purchase_link = '请输入参考购买链接';
-    } else if (!/^https?:\/\/.+/.test(form.purchase_link)) {
-      errors.purchase_link = '请输入有效的链接（以 http:// 或 https:// 开头）';
+    if (recommendType === 'specific') {
+      if (!form.purchase_link.trim()) {
+        errors.purchase_link = '请输入参考购买链接';
+      } else if (!/^https?:\/\/.+/.test(form.purchase_link)) {
+        errors.purchase_link = '请输入有效的链接（以 http:// 或 https:// 开头）';
+      }
     }
 
     setFieldErrors(errors);
@@ -287,14 +292,46 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              商品名称 <span className="text-red-500">*</span>
+              分享类型
+            </label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setRecommendType('specific')}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium border transition-colors ${
+                  recommendType === 'specific'
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white text-text1 border-warm-border hover:border-primary/30'
+                }`}
+              >
+                具体商品
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecommendType('category')}
+                className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium border transition-colors ${
+                  recommendType === 'category'
+                    ? 'bg-primary text-white border-primary'
+                    : 'bg-white text-text1 border-warm-border hover:border-primary/30'
+                }`}
+              >
+                某一类/某家店的产品
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-text1 mb-1.5">
+              {recommendType === 'specific' ? '商品名称' : '某一类/某家店的产品'} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="建议直接粘贴电商平台商品名称"
+              placeholder={recommendType === 'specific'
+                ? '建议直接粘贴电商平台商品名称'
+                : '淘宝杂牌xx / 某家女装店或品牌 等'}
               maxLength={200}
               className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-colors ${
                 fieldErrors.name ? 'border-red-400' : 'border-warm-border'
@@ -308,13 +345,17 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              使用感受 / 推荐理由 / 使用方法 <span className="text-red-500">*</span>
+              {recommendType === 'specific'
+                ? '使用感受 / 推荐理由 / 使用方法'
+                : '购买经历、感受，推荐/避雷理由，吐槽/谩骂等'} <span className="text-red-500">*</span>
             </label>
             <textarea
               name="description"
               value={form.description}
               onChange={handleChange}
-              placeholder="裙子尺码很大，适合大体型小南娘 / 香水味道很廉价劣质，不值得买 ...（内容丰富、长篇、优质的评价更易通过审核）"
+              placeholder={recommendType === 'specific'
+                ? '裙子尺码很大，适合大体型小南娘 / 香水味道很廉价劣质，不值得买 ...（内容丰富、长篇、优质的评价更易通过审核）'
+                : '主要购买途径，类目特征等。\n质量差、掉色、缝合线严重等等\n（内容丰富、长篇、优质的分享更易通过审核）'}
               rows={5}
               className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-colors resize-none ${
                 fieldErrors.description ? 'border-red-400' : 'border-warm-border'
@@ -327,7 +368,8 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              参考购买链接 <span className="text-red-500">*</span>
+              {recommendType === 'specific' ? '参考购买链接' : '店铺链接（可选）'}
+              {recommendType === 'specific' && <span className="text-red-500">*</span>}
             </label>
             <input
               type="url"
@@ -346,7 +388,9 @@ const Upload = () => {
 
           <div>
             <label className="block text-sm font-medium text-text1 mb-1.5">
-              图片（建议上传自己使用或上身效果图哦！） <span className="text-red-500">*</span>
+              {recommendType === 'specific'
+                ? '图片（建议上传自己使用或上身效果图哦！）'
+                : '相关图片（踩坑经历等）'} <span className="text-red-500">*</span>
             </label>
             <ImageUpload images={images} onChange={setImages} maxImages={9} />
             {images.length === 0 && (

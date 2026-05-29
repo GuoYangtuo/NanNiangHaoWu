@@ -57,9 +57,12 @@ const createProductRules = [
     .isLength({ max: 5000 })
     .withMessage('简介长度不能超过 5000 个字符'),
   body('purchase_link')
-    .optional()
-    .isURL({ protocols: ['http', 'https'], require_protocol: true })
-    .withMessage('请输入有效的购买链接（需包含 http:// 或 https://）'),
+    .optional({ nullable: true, checkFalsy: false })
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      if (!/^https?:\/\/.+/.test(value)) throw new Error('请输入有效的链接（需包含 http:// 或 https://）');
+      return true;
+    }),
   body('rating')
     .optional()
     .isInt({ min: 1, max: 5 })
