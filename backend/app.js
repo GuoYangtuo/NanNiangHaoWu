@@ -225,6 +225,42 @@ const initializeDatabase = async () => {
       logger.warn('Database', `reviews 表检查/创建失败: ${err.message}，将跳过`);
     }
 
+    // 确保 favorites 表存在且 id 列正确为自增主键（旧数据库升级用）
+    try {
+      const [favTables] = await sequelize.query(
+        "SHOW TABLES LIKE 'favorites'"
+      );
+      if (!favTables || favTables.length === 0) {
+        await sequelize.query(`
+          CREATE TABLE IF NOT EXISTS favorites (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            product_id INT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_user (user_id),
+            INDEX idx_product (product_id),
+            UNIQUE INDEX idx_user_product (user_id, product_id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
+        logger.info('Database', 'favorites 表创建完成');
+      } else {
+        // 检查 id 列是否正确设置为自增主键
+        const [idColInfo] = await sequelize.query(
+          "SELECT COLUMN_DEFAULT, IS_NULLABLE, DATA_TYPE, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'favorites' AND COLUMN_NAME = 'id'"
+        );
+        if (!idColInfo || idColInfo.length === 0 || idColInfo[0].EXTRA !== 'auto_increment') {
+          // id 列存在但没有 auto_increment，需要修复
+          await sequelize.query("ALTER TABLE `favorites` MODIFY COLUMN `id` INT AUTO_INCREMENT PRIMARY KEY");
+          logger.info('Database', 'favorites 表 id 列已修复为自增主键');
+        }
+      }
+    } catch (err) {
+      logger.warn('Database', `favorites 表检查/创建失败: ${err.message}，将跳过`);
+    }
+
     // 创建管理员账号
     const adminPassword = process.env.ADMIN_PASSWORD || 'admin123456';
     const [adminUser, created] = await User.findOrCreate({
