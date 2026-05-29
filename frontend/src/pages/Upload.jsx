@@ -358,7 +358,7 @@ const Upload = () => {
             <label className="block text-sm font-medium text-text1 mb-1.5">
               你的评分
             </label>
-            <p className="text-xs text-text2 mb-2">给这个好物打个分吧！上传后会自动生成一条你的评分记录~</p>
+            <p className="text-xs text-text2 mb-2">给这个好物打个分吧！上传后会自动生成一条上传者评分记录~</p>
             <div className="flex items-center gap-2">
               <span
                 className="inline-flex items-center gap-1"
