@@ -47,7 +47,7 @@ const Login = () => {
             className="w-16 h-16 mx-auto rounded-2xl object-cover mb-4"
           />
           <h1 className="text-2xl font-bold text-text1">{SITE_NAME}</h1>
-          <p className="text-text2 mt-1">欢迎回来~</p>
+          <p className="text-text2 mt-1">欢迎回来喵~</p>
         </div>
 
         {/* 登录表单 */}
@@ -96,7 +96,13 @@ const Login = () => {
             </button>
           </div>
 
-          <p className="text-sm text-text2 text-center mt-6">
+          <p className="text-sm text-text2 text-center mt-4">
+            <Link to="/reset-password" className="text-primary hover:underline font-medium">
+              忘记密码？
+            </Link>
+          </p>
+
+          <p className="text-sm text-text2 text-center mt-4">
             还没有账号？{' '}
             <Link to="/register" className="text-primary hover:underline font-medium">
               立即注册

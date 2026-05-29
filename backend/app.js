@@ -117,6 +117,26 @@ const initializeDatabase = async () => {
     // 设置关联
     setupAssociations();
 
+    // 清理旧版本遗留的验证码相关列（如存在则删除，不再存储到数据库）
+    const dropColIfExists = async (colName) => {
+      try {
+        const [r] = await sequelize.query(
+          `SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = '${colName}' LIMIT 1`
+        );
+        if (r && r.length > 0) {
+          await sequelize.query(`ALTER TABLE \`users\` DROP COLUMN \`${colName}\``);
+          logger.info('Database', `users 表 ${colName} 列已删除`);
+        }
+      } catch (err) {
+        logger.warn('Database', `清理列 ${colName} 失败: ${err.message}，不影响启动`);
+      }
+    };
+    await dropColIfExists('email_verified');
+    await dropColIfExists('email_verify_code');
+    await dropColIfExists('email_verify_expires');
+    await dropColIfExists('password_reset_code');
+    await dropColIfExists('password_reset_expires');
+
     // 安全同步：仅创建缺失的表/列，不 alter 现有表，避免 MySQL 64 key 限制
     await sequelize.sync();
     logger.info('Database', '数据库模型同步完成');

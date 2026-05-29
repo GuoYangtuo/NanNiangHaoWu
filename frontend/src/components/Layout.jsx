@@ -6,6 +6,7 @@ import { getFavorites, removeFavorite } from '../api/favorites';
 import { SubscriptionModal } from './SubscriptionModal';
 import { ProductReviewStatusModal } from './ProductReviewStatusModal';
 import EditNicknameModal from './EditNicknameModal';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const Layout = () => {
   const { user, logout, isAdmin, isActiveMember, fetchUser } = useAuth();
@@ -16,6 +17,7 @@ const Layout = () => {
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [reviewStatusModalOpen, setReviewStatusModalOpen] = useState(false);
   const [editNicknameModalOpen, setEditNicknameModalOpen] = useState(false);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [favoritesLoading, setFavoritesLoading] = useState(false);
   const hideTimer = useRef(null);
@@ -243,6 +245,17 @@ const Layout = () => {
                           </Link>
                         )}
 
+                        {/* 修改密码 */}
+                        <button
+                          onClick={() => { setMenuOpen(false); setChangePasswordModalOpen(true); }}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-text2 hover:bg-primary-light/50 hover:text-primary transition-colors w-full text-left"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                          </svg>
+                          修改密码
+                        </button>
+
                         {/* 退出登录 */}
                         <div className="border-t border-warm-border mt-1 pt-1">
                           <button
@@ -397,6 +410,16 @@ const Layout = () => {
       {editNicknameModalOpen && (
         <EditNicknameModal
           onClose={() => setEditNicknameModalOpen(false)}
+          onSuccess={() => {
+            fetchUser();
+          }}
+        />
+      )}
+
+      {/* 修改密码弹窗 */}
+      {changePasswordModalOpen && (
+        <ChangePasswordModal
+          onClose={() => setChangePasswordModalOpen(false)}
           onSuccess={() => {
             fetchUser();
           }}
