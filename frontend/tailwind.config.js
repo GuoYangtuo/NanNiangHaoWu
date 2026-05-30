@@ -30,8 +30,18 @@ export default {
       boxShadow: {
         'card': '0 2px 12px rgba(0,0,0,0.06)',
         'card-hover': '0 8px 24px rgba(0,0,0,0.10)',
-      }
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      addUtilities({
+        '.scrollbar-hide': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+        },
+      });
+    },
+  ],
 }

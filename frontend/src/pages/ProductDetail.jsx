@@ -217,11 +217,11 @@ const ProductDetail = () => {
   const uploaderReview = reviews.find((r) => r.user?.id === product.user?.id);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-6 sm:py-8">
       {/* 返回按钮 */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-text2 hover:text-primary transition-colors mb-6"
+        className="flex items-center gap-2 text-text2 hover:text-primary transition-colors mb-4 sm:mb-6 text-sm"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -254,7 +254,7 @@ const ProductDetail = () => {
             {/* 图片指示器 */}
             {images.length > 1 && (
               <>
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
                   {images.map((_, index) => (
                     <button
                       key={index}
@@ -269,17 +269,19 @@ const ProductDetail = () => {
                 {/* 左右箭头 */}
                 <button
                   onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-colors"
+                  className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-colors touch-manipulation"
+                  aria-label="上一张"
                 >
-                  <svg className="w-5 h-5 text-text1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-text1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <button
                   onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-colors"
+                  className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-10 sm:h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-colors touch-manipulation"
+                  aria-label="下一张"
                 >
-                  <svg className="w-5 h-5 text-text1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-text1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -296,7 +298,7 @@ const ProductDetail = () => {
 
         {/* 缩略图列表 */}
         {images.length > 1 && (
-          <div className="px-6 py-3 border-b border-warm-border flex gap-2 overflow-x-auto">
+          <div className="px-3 sm:px-6 py-3 border-b border-warm-border flex gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1 sm:mx-0 sm:px-0">
             {images.map((img, index) => {
               const imgUrl = img;
               return (
@@ -329,66 +331,68 @@ const ProductDetail = () => {
         )}
 
         {/* 商品信息 */}
-        <div className="p-6 md:p-8">
+        <div className="p-3.5 sm:p-6 md:p-8">
           {/* 标题和分类 */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
               {product.category && (
-                <span className="px-3 py-1 bg-primary-light/60 text-primary-dark text-xs font-medium rounded-full">
+                <span className="px-3 py-1 bg-primary-light/60 text-primary-dark text-xs font-medium rounded-full flex-shrink-0">
                   {product.category.name}
                 </span>
               )}
-              {isAdmin && (
-                <button
-                  onClick={() => setEditModalProduct(product)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                  编辑
-                </button>
-              )}
-              {user && (
-                <button
-                  onClick={handleFavoriteToggle}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
-                    isFavorited
-                      ? 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'
-                      : 'bg-white border-warm-border text-text2 hover:border-red-300 hover:text-red-400'
-                  }`}
-                  title={isFavorited ? '取消收藏' : '收藏'}
-                >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill={isFavorited ? 'currentColor' : 'none'}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {isAdmin && (
+                  <button
+                    onClick={() => setEditModalProduct(product)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  {isFavorited ? '已收藏' : '收藏'}
-                </button>
-              )}
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                    编辑
+                  </button>
+                )}
+                {user && (
+                  <button
+                    onClick={handleFavoriteToggle}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                      isFavorited
+                        ? 'bg-red-50 border-red-200 text-red-500 hover:bg-red-100'
+                        : 'bg-white border-warm-border text-text2 hover:border-red-300 hover:text-red-400'
+                    }`}
+                    title={isFavorited ? '取消收藏' : '收藏'}
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill={isFavorited ? 'currentColor' : 'none'}
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    {isFavorited ? '已收藏' : '收藏'}
+                  </button>
+                )}
+              </div>
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-text1">{product.name}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text1 leading-snug">{product.name}</h1>
           </div>
 
           {/* 推荐人信息 */}
-          <div className="pb-6 border-b border-warm-border">
+          <div className="pb-4 sm:pb-6 border-b border-warm-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center">
-                <span className="text-primary font-bold">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary-light flex items-center justify-center flex-shrink-0">
+                <span className="text-primary font-bold text-sm sm:text-base">
                   {product.user?.username?.charAt(0).toUpperCase() || 'N'}
                 </span>
               </div>
-              <div>
-                <p className="text-sm font-medium text-text1">{product.user?.username || '匿名用户'}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-text1 truncate">{product.user?.username || '匿名用户'}</p>
                 <p className="text-xs text-text2">推荐于 {formatDate(product.created_at)}</p>
               </div>
               {uploaderReview && (
-                <div className="ml-auto flex items-center gap-2">
+                <div className="ml-auto flex flex-col sm:flex-row items-end sm:items-center gap-0.5 sm:gap-2 flex-shrink-0">
                   <RatingIcon rating={uploaderReview.rating} size={22} />
                   {(() => {
                     const label = getRatingLabel(uploaderReview.rating);
@@ -396,7 +400,7 @@ const ProductDetail = () => {
                       <span className={`text-sm font-semibold ${label.color}`}>{label.label}</span>
                     ) : null;
                   })()}
-                  <span className="text-xs text-text2/50">（上传者评分）</span>
+                  <span className="text-xs text-text2/50 hidden sm:inline">（上传者评分）</span>
                 </div>
               )}
             </div>
@@ -404,7 +408,7 @@ const ProductDetail = () => {
 
           {/* 简介 */}
           {product.description && (
-            <div className="py-6 border-b border-warm-border">
+            <div className="py-4 sm:py-6 border-b border-warm-border">
               <h2 className="text-sm font-semibold text-text1 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -419,7 +423,7 @@ const ProductDetail = () => {
 
           {/* 购买链接 */}
           {product.purchase_link && (
-            <div className="pt-6">
+            <div className="pt-4 sm:pt-6">
               <h2 className="text-sm font-semibold text-text1 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -443,9 +447,9 @@ const ProductDetail = () => {
       </div>
 
       {/* 评论区域 */}
-      <div className="mt-6 bg-white rounded-2xl shadow-card overflow-hidden px-6 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-bold text-text1 flex items-center gap-2">
+      <div className="mt-6 bg-white rounded-2xl shadow-card overflow-hidden px-3 sm:px-6 py-5 sm:py-6">
+        <div className="flex items-start sm:items-center justify-between gap-2 mb-4">
+          <h2 className="text-base font-bold text-text1 flex items-center gap-2 flex-shrink-0">
             <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
@@ -454,25 +458,25 @@ const ProductDetail = () => {
           {product.review_count > 0 && (() => {
             const label = getRatingLabel(product.average_rating);
             return (
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                 <RatingIcon rating={product.average_rating} size={24} />
                 <span className="text-sm text-text2 font-medium">{product.average_rating.toFixed(1)}</span>
                 {label && <span className={`text-xs font-semibold ${label.color}`}>{label.label}</span>}
-                <span className="text-xs text-text2/60">（平均自 {product.review_count} 条评价）</span>
+                <span className="text-xs text-text2/60 hidden sm:inline">（{product.review_count} 条）</span>
               </span>
             );
           })()}
         </div>
 
         {/* 发表/编辑评论 */}
-        <div className="bg-warm-bg rounded-xl p-5 mb-6">
+        <div className="bg-warm-bg rounded-xl p-4 sm:p-5 mb-5 sm:mb-6">
           <h3 className="text-sm font-semibold text-text1 mb-3">
             {user ? '发表评价' : '登录后可发表评价'}
           </h3>
 
           {/* 评分选择 */}
-          <div className="flex items-center mb-3">
-            <span className="text-sm text-text2 mr-3">我的评分：</span>
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mb-3">
+            <span className="text-sm text-text2">我的评分：</span>
             <span
               className="inline-flex items-center gap-1"
               onMouseLeave={() => setHoverRating(0)}
@@ -503,7 +507,7 @@ const ProductDetail = () => {
             {myRating > 0 && (() => {
               const label = getRatingLabel(myRating);
               return label ? (
-                <span className={`text-sm font-semibold ml-2 ${label.color}`}>
+                <span className={`text-sm font-semibold ${label.color}`}>
                   {label.label}
                 </span>
               ) : null;
@@ -558,7 +562,7 @@ const ProductDetail = () => {
               <div className="space-y-4">
                 {reviews.map((review) => (
                   <div key={review.id} className="flex gap-3 pb-4 border-b border-warm-border last:border-0 last:pb-0">
-                    <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary-light flex items-center justify-center flex-shrink-0 mt-0.5">
                       <span className="text-primary text-xs font-bold">
                         {review.user?.username?.charAt(0).toUpperCase() || 'N'}
                       </span>
@@ -573,7 +577,7 @@ const ProductDetail = () => {
                             <span className="px-1.5 py-0.5 bg-primary/10 text-primary text-xs rounded font-medium">上传者</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                           <RatingIcon rating={review.rating} size={14} />
                           {(() => {
                             const label = getRatingLabel(review.rating);
@@ -584,7 +588,7 @@ const ProductDetail = () => {
                           {(user?.id === review.user?.id || user?.role === 'admin') && (
                             <button
                               onClick={() => handleDeleteReview(review.id)}
-                              className="text-xs text-text2/40 hover:text-red-400 transition-colors"
+                              className="text-xs text-text2/40 hover:text-red-400 transition-colors ml-auto sm:ml-0"
                             >
                               删除
                             </button>
