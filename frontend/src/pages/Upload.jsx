@@ -367,16 +367,34 @@ const Upload = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-text1 mb-1.5">
-              {recommendType === 'specific' ? '参考购买链接' : '店铺链接（可选）'}
-              {recommendType === 'specific' && <span className="text-red-500">*</span>}
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-text1">
+                {recommendType === 'specific' ? '参考购买链接' : '店铺链接（可选）'}
+                {recommendType === 'specific' && <span className="text-red-500">*</span>}
+              </label>
+              {recommendType === 'specific' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const match = form.purchase_link.match(/https?:\/\/[^\s]+/);
+                    if (match) {
+                      setForm((f) => ({ ...f, purchase_link: match[0] }));
+                    } else {
+                      setFieldErrors((e) => ({ ...e, purchase_link: '未检测到有效链接' }));
+                    }
+                  }}
+                  className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                >
+                  提取链接
+                </button>
+              )}
+            </div>
             <input
               type="url"
               name="purchase_link"
               value={form.purchase_link}
               onChange={handleChange}
-              placeholder="https://..."
+              placeholder="粘贴含商品链接的文本"
               className={`w-full px-4 py-3 border rounded-lg text-sm focus:ring-2 focus:ring-primary/20 transition-colors ${
                 fieldErrors.purchase_link ? 'border-red-400' : 'border-warm-border'
               }`}
