@@ -47,7 +47,7 @@ const MAX_LEFT_INDEX = MAX_INDEX - 1;  // 8（50 档，左侧滑块上限）
 // TICKS 索引转滑条百分比
 const indexToPercent = (index) => {
   const t = index / MAX_INDEX;
-  return Math.pow(t, 1 / 1.8) * 100;
+  return Math.pow(t, 1 / 1.4) * 100;
 };
 
 // 根据滑条百分比找出最近的 TICKS 索引
@@ -142,7 +142,7 @@ const RangeFilterPanel = ({ minValue, maxValue, onChange }) => {
       {/* 轨道 + 两只滑块 */}
       <div
         ref={trackRef}
-        className="relative h-8 mt-2 mb-1 cursor-pointer select-none"
+        className="relative h-8 mt-1 mb-0 cursor-pointer select-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -384,7 +384,7 @@ const Home = () => {
                   {[
                     { value: 'time', label: '时间' },
                     { value: 'review_count', label: '评论数' },
-                    { value: 'hot', label: '热度' },
+                    { value: 'rating', label: '评分' },
                   ].map(opt => (
                     <button
                       key={opt.value}
@@ -434,7 +434,7 @@ const Home = () => {
 
                 {/* 筛选下拉面板 */}
                 {filterOpen && (
-                  <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg p-4 w-64">
+                  <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg py-3.5 px-5 w-64">
                     <RangeFilterPanel
                       minValue={reviewCountMin}
                       maxValue={reviewCountMax}
