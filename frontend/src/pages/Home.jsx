@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import CategoryTree from '../components/CategoryTree';
@@ -39,32 +39,97 @@ const findLeafById = (nodes, id) => {
 const STORAGE_KEY = 'home_state_v1';
 
 // 双滑条筛选面板
+// TICKS 最后一项 100 代表"无限制"，左侧滑块最大只能滑动到 50 档（index 8）
+const TICKS = [0, 1, 2, 3, 5, 8, 12, 20, 50, 100];
+const MAX_INDEX = TICKS.length - 1;    // 9（100 档）
+const MAX_LEFT_INDEX = MAX_INDEX - 1;  // 8（50 档，左侧滑块上限）
+
+// TICKS 索引转滑条百分比
+const indexToPercent = (index) => {
+  const t = index / MAX_INDEX;
+  return Math.pow(t, 1 / 1.8) * 100;
+};
+
+// 根据滑条百分比找出最近的 TICKS 索引
+const nearestTickIndex = (percent) => {
+  let nearest = 0;
+  let nearestDist = Infinity;
+  for (let i = 0; i <= MAX_INDEX; i++) {
+    const pct = indexToPercent(i);
+    const dist = Math.abs(pct - percent);
+    if (dist < nearestDist) {
+      nearestDist = dist;
+      nearest = i;
+    }
+  }
+  return nearest;
+};
+
+// 判断右侧滑块当前是否处于"无限制"位置
+const isUnlimited = (val) => val === '' || val === '100';
+
 const RangeFilterPanel = ({ minValue, maxValue, onChange }) => {
   const [localMin, setLocalMin] = useState(minValue);
   const [localMax, setLocalMax] = useState(maxValue);
-  const MAX = 50;
+  const trackRef = useRef(null);
+  const draggingRef = useRef(null);
 
-  // 打开面板时同步本地状态
   useEffect(() => {
     setLocalMin(minValue);
     setLocalMax(maxValue);
   }, [minValue, maxValue]);
 
-  const displayMin = localMin || 0;
-  const displayMax = localMax || '∞';
+  const minIdx = localMin !== '' ? TICKS.indexOf(parseInt(localMin)) : 0;
+  // maxIdx：空字符串视为"无限制"，即最后一档（100）
+  const maxIdx = localMax !== '' ? TICKS.indexOf(parseInt(localMax)) : MAX_INDEX;
 
-  const handleMaxChange = (rawVal) => {
-    const val = Math.min(parseInt(rawVal) || 0, MAX);
-    setLocalMax(String(val));
+  const displayMin = localMin !== '' ? localMin : '0';
+  const displayMax = isUnlimited(localMax) ? '无限制' : localMax;
+
+  // 限制左侧滑块最大可拖到 50 档（index 8）
+  const leftThumbMaxIdx = Math.min(minIdx > MAX_LEFT_INDEX ? minIdx : MAX_LEFT_INDEX, MAX_LEFT_INDEX);
+
+  const handlePointerDown = (e) => {
+    if (!trackRef.current) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const rect = trackRef.current.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const idx = nearestTickIndex(percent);
+    const minDist = Math.abs(percent - indexToPercent(minIdx));
+    const maxDist = Math.abs(percent - indexToPercent(maxIdx));
+    draggingRef.current = minDist <= maxDist ? 'min' : 'max';
   };
 
-  const handleMinChange = (rawVal) => {
-    const val = Math.min(parseInt(rawVal) || 0, MAX);
-    setLocalMin(String(val));
+  const handlePointerMove = (e) => {
+    if (!draggingRef.current || !trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const idx = nearestTickIndex(percent);
+    if (draggingRef.current === 'min') {
+      // 左侧滑块不能超过 MAX_LEFT_INDEX（50 档）
+      const clamped = Math.min(idx, MAX_LEFT_INDEX);
+      setLocalMin(String(TICKS[Math.min(clamped, maxIdx)]));
+    } else {
+      // 右侧滑块：滑动到 MAX_INDEX（100）时设为无限制
+      if (idx >= MAX_INDEX) {
+        setLocalMax('');
+      } else {
+        const clamped = Math.max(idx, minIdx);
+        setLocalMax(String(TICKS[clamped]));
+      }
+    }
   };
 
-  const handleCommit = () => {
-    onChange(localMin, localMax);
+  const commitChange = (min, max) => {
+    // 将 '0' 视为"无下限"（空字符串），避免筛选按钮误亮
+    const committedMin = min === '0' ? '' : min;
+    const committedMax = max === '0' ? '' : max;
+    onChange(committedMin, committedMax);
+  };
+
+  const handlePointerUp = () => {
+    commitChange(localMin, localMax);
+    draggingRef.current = null;
   };
 
   return (
@@ -73,46 +138,37 @@ const RangeFilterPanel = ({ minValue, maxValue, onChange }) => {
         <p className="text-xs font-semibold text-text2 uppercase tracking-wider">按评论数筛选</p>
         <span className="text-xs text-text2">{displayMin} ~ {displayMax}</span>
       </div>
-      <div className="relative h-6 mt-2 mb-2">
-        <div
-          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-[#E8DDD8]"
-          style={{ left: 0, right: 0 }}
-        >
+
+      {/* 轨道 + 两只滑块 */}
+      <div
+        ref={trackRef}
+        className="relative h-8 mt-2 mb-1 cursor-pointer select-none"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        {/* 轨道 */}
+        <div className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-[#E8DDD8]" style={{ left: 0, right: 0 }}>
           <div
             className="absolute h-full rounded-full bg-[#E879A9]"
             style={{
-              left: `${((parseInt(localMin) || 0) / MAX) * 100}%`,
-              right: `${((MAX - (parseInt(localMax) || MAX)) / MAX) * 100}%`,
+              left: `${indexToPercent(minIdx)}%`,
+              right: `${100 - indexToPercent(maxIdx)}%`,
             }}
           />
         </div>
-        <input
-          type="range"
-          min="0"
-          max={MAX}
-          value={localMin}
-          onChange={e => {
-            const val = parseInt(e.target.value);
-            const maxVal = parseInt(localMax) || MAX;
-            setLocalMin(String(Math.min(val, maxVal)));
-          }}
-          onMouseUp={handleCommit}
-          onTouchEnd={handleCommit}
-          className="range-input"
+
+        {/* 左侧滑块 */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-[18px] h-[18px] rounded-full bg-white border-2 border-[#E879A9] shadow cursor-grab active:cursor-grabbing pointer-events-auto"
+          style={{ left: `calc(${indexToPercent(minIdx)}% - 9px)` }}
         />
-        <input
-          type="range"
-          min="0"
-          max={MAX}
-          value={localMax || MAX}
-          onChange={e => {
-            const val = parseInt(e.target.value);
-            const minVal = parseInt(localMin) || 0;
-            setLocalMax(String(Math.max(val, minVal)));
-          }}
-          onMouseUp={handleCommit}
-          onTouchEnd={handleCommit}
-          className="range-input"
+
+        {/* 右侧滑块 */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-[18px] h-[18px] rounded-full bg-white border-2 border-[#E879A9] shadow cursor-grab active:cursor-grabbing pointer-events-auto"
+          style={{ left: `calc(${indexToPercent(maxIdx)}% - 9px)` }}
         />
       </div>
     </>
@@ -365,7 +421,7 @@ const Home = () => {
                 <button
                   onClick={() => setFilterOpen(prev => !prev)}
                   className={`p-2 rounded-lg transition-colors ${
-                    filterOpen || reviewCountMin || reviewCountMax
+                    reviewCountMin !== '' || reviewCountMax !== ''
                       ? 'bg-primary text-white'
                       : 'bg-warm-bg text-text2 hover:text-text1 hover:bg-warm-border/50'
                   }`}
@@ -387,17 +443,6 @@ const Home = () => {
                         setReviewCountMax(max);
                       }}
                     />
-                    <div className="flex justify-end mt-1">
-                      <button
-                        onClick={() => {
-                          setReviewCountMin('');
-                          setReviewCountMax('');
-                        }}
-                        className="px-3 py-1.5 text-sm text-text2 hover:text-text1 border border-warm-border rounded-lg hover:bg-warm-bg transition-colors"
-                      >
-                        重置
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
