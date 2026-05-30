@@ -373,7 +373,7 @@ const Home = () => {
       </aside>
 
       {/* 右侧主内容 */}
-      <div className="flex-1 px-2 py-3 sm:px-4 md:px-8 md:py-6">
+      <div className="flex-1 px-2 py-3 sm:px-4 md:px-6 md:py-4">
         {/* 移动端分类选择 */}
         <div className="md:hidden mb-2">
           <MobileCategoryDropdown selectedId={selectedCategory} onSelect={handleCategorySelect} />

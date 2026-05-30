@@ -217,7 +217,7 @@ const ProductDetail = () => {
   const uploaderReview = reviews.find((r) => r.user?.id === product.user?.id);
 
   return (
-    <div className="max-w-4xl mx-auto px-2.5 sm:px-4 py-6 sm:py-8">
+    <div className="max-w-3xl mx-auto px-2.5 sm:px-4 py-6 sm:py-8">
       {/* 返回按钮 */}
       <button
         onClick={() => navigate(-1)}
@@ -376,7 +376,7 @@ const ProductDetail = () => {
                 )}
               </div>
             </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text1 leading-snug">{product.name}</h1>
+            <h1 className="text-lg sm:text-2xl md:text-2xl font-bold text-text1 leading-snug">{product.name}</h1>
           </div>
 
           {/* 推荐人信息 */}
