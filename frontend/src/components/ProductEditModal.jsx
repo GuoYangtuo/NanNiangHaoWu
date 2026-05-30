@@ -148,9 +148,10 @@ const ProductEditModal = ({ product, onClose, onSuccess, onAfterSave }) => {
   const { categories, loading: categoriesLoading } = useCategories();
 
   const getInitialImages = () => {
-    return (product.images || []).map((img) => {
+    const productCaptions = product.image_captions || [];
+    return (product.images || []).map((img, i) => {
       const src = img.startsWith('/uploads/') ? img : `/uploads/${img}`;
-      return { preview: src, isNew: false, original: img };
+      return { preview: src, isNew: false, original: img, caption: productCaptions[i] || '' };
     });
   };
 
@@ -208,6 +209,9 @@ const ProductEditModal = ({ product, onClose, onSuccess, onAfterSave }) => {
       newImages.forEach((img) => {
         formData.append('images', img.file);
       });
+
+      const captions = images.map((img) => img.caption || '');
+      formData.append('image_captions', JSON.stringify(captions));
 
       const { updateAdminProduct } = await import('../api/admin');
       await updateAdminProduct(product.id, formData);

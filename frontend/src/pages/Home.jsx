@@ -36,14 +36,26 @@ const findLeafById = (nodes, id) => {
   return null;
 };
 
+const STORAGE_KEY = 'home_state_v1';
+
+const loadState = () => {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
 const Home = () => {
   const { user, isAdmin, isActiveMember } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [products, setProducts] = useState([]);
+  const init = loadState();
+  const [selectedCategory, setSelectedCategory] = useState(init.selectedCategory ?? null);
+  const [products, setProducts] = useState(init.products ?? []);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(init.page ?? 1);
   const [hasMore, setHasMore] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState(init.searchKeyword ?? '');
   const { categories, lockedIds } = useCategories();
   const isSubscribed = isActiveMember;
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -51,6 +63,20 @@ const Home = () => {
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [editError, setEditError] = useState('');
   const [editModalProduct, setEditModalProduct] = useState(null);
+
+  // Persist state to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        selectedCategory,
+        products,
+        page,
+        searchKeyword,
+      }));
+    } catch {
+      // Silently ignore storage errors (quota exceeded, etc.)
+    }
+  }, [selectedCategory, products, page, searchKeyword]);
 
   const selectedFolder = selectedCategory ? findFolderById(categories, selectedCategory) : null;
   const selectedFolderContent = selectedFolder?.content || null;

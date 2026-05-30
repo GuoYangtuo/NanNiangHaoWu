@@ -233,7 +233,7 @@ router.put('/products/:id', upload.array('images', 9), async (req, res) => {
       return notFound(res, '商品不存在');
     }
 
-    const { category_id, name, description, purchase_link, delete_images } = req.body;
+    const { category_id, name, description, purchase_link, delete_images, image_captions } = req.body;
 
     if (category_id && !isValidCategory(category_id)) {
       if (req.files && req.files.length > 0) {
@@ -300,6 +300,14 @@ router.put('/products/:id', upload.array('images', 9), async (req, res) => {
     }
     if (updatedImages.length > 0 || newImageFiles.length > 0 || delete_images) {
       updateData.images = updatedImages;
+    }
+
+    if (image_captions !== undefined) {
+      try {
+        updateData.image_captions = JSON.parse(image_captions);
+      } catch {
+        updateData.image_captions = [];
+      }
     }
 
     await product.update(updateData);

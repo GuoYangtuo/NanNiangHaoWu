@@ -194,7 +194,7 @@ const initializeDatabase = async () => {
       logger.warn('Database', `password_changed_at 列检查/创建失败: ${err.message}，将跳过`);
     }
 
-    // 确保 products 表存在 average_rating 和 review_count 列（旧数据库升级用）
+    // 确保 products 表存在 average_rating、review_count 和 image_captions 列（旧数据库升级用）
     try {
       const [results2] = await sequelize.query(
         "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'average_rating' LIMIT 1"
@@ -210,6 +210,21 @@ const initializeDatabase = async () => {
       }
     } catch (err) {
       logger.warn('Database', `products average_rating/review_count 列检查/创建失败: ${err.message}，将跳过`);
+    }
+
+    // 确保 products 表存在 image_captions 列（旧数据库升级用）
+    try {
+      const [results3] = await sequelize.query(
+        "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'image_captions' LIMIT 1"
+      );
+      if (!results3 || results3.length === 0) {
+        await sequelize.query(
+          "ALTER TABLE `products` ADD COLUMN `image_captions` JSON DEFAULT NULL COMMENT '图片注解数组' AFTER `images`"
+        );
+        logger.info('Database', 'products 表 image_captions 列已添加');
+      }
+    } catch (err) {
+      logger.warn('Database', `products image_captions 列检查/创建失败: ${err.message}，将跳过`);
     }
 
     // 确保 reviews 表存在（旧数据库升级用）

@@ -108,6 +108,7 @@ router.get('/', optionalAuth, async (req, res) => {
         description: p.description,
         purchase_link: p.purchase_link,
         images: (p.images || []).map((img) => `/uploads/${img}`),
+        image_captions: p.image_captions || [],
         category: cat ? { id: cat.id, name: cat.name, breadcrumbs: cat.breadcrumbs } : null,
         user: p.user,
         created_at: p.created_at,
@@ -153,6 +154,7 @@ router.get('/my-products', authMiddleware, async (req, res) => {
         description: p.description,
         purchase_link: p.purchase_link,
         images: (p.images || []).map((img) => `/uploads/${img}`),
+        image_captions: p.image_captions || [],
         status: p.status,
         category: cat ? { id: cat.id, name: cat.name } : null,
         created_at: p.created_at,
@@ -217,6 +219,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       description: product.description,
       purchase_link: product.purchase_link,
       images: (product.images || []).map((img) => `/uploads/${img}`),
+      image_captions: product.image_captions || [],
       category: cat ? { id: cat.id, name: cat.name, parentName: cat.parentName } : null,
       user: product.user,
       created_at: product.created_at,
@@ -246,9 +249,17 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
       return badRequest(res, errors.array()[0].msg);
     }
 
-    const { category_id, name, description, purchase_link, rating } = req.body;
+    const { category_id, name, description, purchase_link, rating, image_captions } = req.body;
 
     const images = (req.files || []).map((file) => file.filename);
+    let captions = [];
+    if (image_captions) {
+      try {
+        captions = JSON.parse(image_captions);
+      } catch {
+        captions = [];
+      }
+    }
 
     // 无审核模式：自动通过
     const noReviewMode = getNoReviewMode();
@@ -261,6 +272,7 @@ router.post('/', authMiddleware, upload.array('images', 9), createProductRules, 
       description: description ? description.trim() : null,
       purchase_link: purchase_link ? purchase_link.trim() : null,
       images,
+      image_captions: captions,
       status: initialStatus
     });
 
@@ -324,16 +336,25 @@ router.put('/:id', authMiddleware, upload.array('images', 9), createProductRules
       return badRequest(res, '只能修改待审核状态的商品');
     }
 
-    const { category_id, name, description, purchase_link } = req.body;
+    const { category_id, name, description, purchase_link, image_captions } = req.body;
 
     const newImages = (req.files || []).map((file) => file.filename);
+    let newCaptions = product.image_captions || [];
+    if (image_captions !== undefined) {
+      try {
+        newCaptions = JSON.parse(image_captions);
+      } catch {
+        newCaptions = [];
+      }
+    }
 
     await product.update({
       category_id,
       name: name.trim(),
       description: description ? description.trim() : null,
       purchase_link: purchase_link ? purchase_link.trim() : null,
-      images: newImages.length > 0 ? newImages : product.images
+      images: newImages.length > 0 ? newImages : product.images,
+      image_captions: newCaptions
     });
 
     return success(res, { id: product.id }, '更新成功');

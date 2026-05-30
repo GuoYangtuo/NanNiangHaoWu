@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import ImageUpload from '../components/ImageUpload';
 import { useCategories } from '../hooks/useCategories';
 import { createProduct } from '../api/product';
@@ -160,15 +159,16 @@ const CategoryBranch = ({ node, path, onSelect, selectedId }) => {
   );
 };
 
+const resetFormState = () => ({
+  category_id: '',
+  name: '',
+  description: '',
+  purchase_link: ''
+});
+
 const Upload = () => {
-  const navigate = useNavigate();
   const { categories, loading: categoriesLoading } = useCategories();
-  const [form, setForm] = useState({
-    category_id: '',
-    name: '',
-    description: '',
-    purchase_link: ''
-  });
+  const [form, setForm] = useState(resetFormState());
   const [images, setImages] = useState([]);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -235,10 +235,18 @@ const Upload = () => {
         formData.append('images', img.file);
       });
 
+      const captions = images.map((img) => img.caption || '');
+      formData.append('image_captions', JSON.stringify(captions));
+
       await createProduct(formData);
 
       alert('提交成功！你的好物推荐正在等待审核，通过后就会出现在首页啦~');
-      navigate('/');
+      setForm(resetFormState());
+      setImages([]);
+      setRating(0);
+      setRecommendType('specific');
+      setFieldErrors({});
+      setError('');
     } catch (err) {
       setError(err.message || '提交失败，请稍后重试');
     } finally {

@@ -49,6 +49,11 @@ const Product = sequelize.define('Product', {
     defaultValue: [],
     comment: '多张图片路径 JSON 数组'
   },
+  image_captions: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: '图片注解 JSON 数组，与 images 索引对应'
+  },
   average_rating: {
     type: DataTypes.DECIMAL(3, 2),
     defaultValue: 0.00,

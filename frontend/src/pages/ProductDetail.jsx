@@ -207,7 +207,9 @@ const ProductDetail = () => {
   }
 
   const images = product.images || [];
+  const captions = product.image_captions || [];
   const displayImage = images[currentImageIndex] || 'https://via.placeholder.com/600x400/F0E8E4/E879A9?text=No+Image';
+  const displayCaption = captions[currentImageIndex] || null;
   // images 已经是完整路径，直接使用
   const actualImage = displayImage;
 
@@ -241,6 +243,13 @@ const ProductDetail = () => {
                 }}
               />
             </div>
+
+            {/* 图片注解 */}
+            {displayCaption && (
+              <div className="px-6 py-2 bg-primary-light/20 border-t border-warm-border">
+                <p className="text-sm text-text2 italic">{displayCaption}</p>
+              </div>
+            )}
 
             {/* 图片指示器 */}
             {images.length > 1 && (
@@ -289,13 +298,12 @@ const ProductDetail = () => {
         {images.length > 1 && (
           <div className="px-6 py-3 border-b border-warm-border flex gap-2 overflow-x-auto">
             {images.map((img, index) => {
-              // images 已经是完整路径
               const imgUrl = img;
               return (
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors relative ${
                     index === currentImageIndex ? 'border-primary' : 'border-transparent'
                   }`}
                 >
@@ -307,6 +315,13 @@ const ProductDetail = () => {
                       e.target.src = 'https://via.placeholder.com/64/F0E8E4/E879A9?text=?';
                     }}
                   />
+                  {captions[index] && (
+                    <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-primary rounded-full flex items-center justify-center">
+                      <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </span>
+                  )}
                 </button>
               );
             })}
