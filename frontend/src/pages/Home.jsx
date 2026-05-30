@@ -198,6 +198,20 @@ const Home = () => {
   const [reviewCountMin, setReviewCountMin] = useState(init.reviewCountMin ?? '');
   const [reviewCountMax, setReviewCountMax] = useState(init.reviewCountMax ?? '');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [sortFilterExpanded, setSortFilterExpanded] = useState(false);
+  const mobileSortFilterRef = useRef(null);
+
+  // 点击移动端排序/筛选浮层外部时关闭
+  useEffect(() => {
+    if (!sortFilterExpanded) return;
+    const handleClick = (e) => {
+      if (mobileSortFilterRef.current && !mobileSortFilterRef.current.contains(e.target)) {
+        setSortFilterExpanded(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [sortFilterExpanded]);
   const { categories, lockedIds } = useCategories();
   const isSubscribed = isActiveMember;
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -377,8 +391,8 @@ const Home = () => {
                 </p>
               </div>
 
-              {/* 排序与筛选 */}
-              <div className="flex items-center gap-2 relative">
+              {/* 排序与筛选 — 桌面端 */}
+              <div className="hidden md:flex items-center gap-2 relative">
                 {/* 排序 Tab */}
                 <div className="flex bg-warm-bg rounded-lg p-0.5 text-sm">
                   {[
@@ -404,7 +418,7 @@ const Home = () => {
                 <button
                   onClick={() => setOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                   className="p-2 rounded-lg bg-warm-bg hover:bg-warm-border/50 text-text2 hover:text-text1 transition-colors"
-                  title={order === 'asc' ? '升序' : '降序'}
+                  title={order === 'asc' ? '从高到低' : '从低到高'}
                 >
                   {order === 'asc' ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -443,6 +457,104 @@ const Home = () => {
                         setReviewCountMax(max);
                       }}
                     />
+                  </div>
+                )}
+              </div>
+
+              {/* 排序与筛选 — 移动端折叠浮层 */}
+              <div className="md:hidden relative self-end" ref={mobileSortFilterRef}>
+                {/* 触发按钮，始终显示 */}
+                <button
+                  onClick={() => setSortFilterExpanded(prev => !prev)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    sort !== 'time' || order !== 'desc' || reviewCountMin !== '' || reviewCountMax !== ''
+                      ? 'bg-primary text-white'
+                      : 'bg-warm-bg text-text2 hover:bg-warm-border/50 hover:text-text1'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  筛选排序
+                  <svg className={`w-3 h-3 transition-transform ${sortFilterExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* 浮层面板 */}
+                {sortFilterExpanded && (
+                  <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg p-4 w-[min(90vw,360px)]">
+                    {/* 排序选项 */}
+                    <div className="mb-3">
+                      <p className="text-xs text-text2 mb-1.5">排序方式</p>
+                      <div className="flex gap-1.5">
+                        {[
+                          { value: 'time', label: '时间' },
+                          { value: 'review_count', label: '评论数' },
+                          { value: 'rating', label: '评分' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setSort(opt.value)}
+                            className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              sort === opt.value
+                                ? 'bg-primary text-white'
+                                : 'bg-warm-bg text-text2 hover:bg-warm-border/50 hover:text-text1'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 升/降序 */}
+                    <div className="mb-3">
+                      <p className="text-xs text-text2 mb-1.5">排序顺序</p>
+                      <div className="flex gap-1.5">
+                        {[
+                          { value: 'asc', label: '从高到低' },
+                          { value: 'desc', label: '从低到高' },
+                        ].map(opt => (
+                          <button
+                            key={opt.value}
+                            onClick={() => setOrder(opt.value)}
+                            className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              order === opt.value
+                                ? 'bg-primary text-white'
+                                : 'bg-warm-bg text-text2 hover:bg-warm-border/50 hover:text-text1'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 评论数筛选 */}
+                    <div className="mb-2">
+                      <RangeFilterPanel
+                        minValue={reviewCountMin}
+                        maxValue={reviewCountMax}
+                        onChange={(min, max) => {
+                          setReviewCountMin(min);
+                          setReviewCountMax(max);
+                        }}
+                      />
+                    </div>
+
+                    {/* 重置按钮 */}
+                    <button
+                      onClick={() => {
+                        setSort('time');
+                        setOrder('desc');
+                        setReviewCountMin('');
+                        setReviewCountMax('');
+                      }}
+                      className="w-full py-2 rounded-lg text-sm text-text2 hover:text-text1 bg-warm-bg hover:bg-warm-border/50 transition-colors"
+                    >
+                      重置全部
+                    </button>
                   </div>
                 )}
               </div>
