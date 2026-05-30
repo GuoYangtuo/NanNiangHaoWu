@@ -133,6 +133,13 @@ const ResetPassword = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-card p-8">
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-lg flex items-start gap-2">
+            <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>修改密码后将自动登出所有已登录设备，请使用新密码重新登录。</span>
+          </div>
+
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
               {error}

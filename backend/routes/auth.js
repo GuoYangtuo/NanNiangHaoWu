@@ -432,6 +432,7 @@ router.post('/forgot-password/reset', [
     }
 
     user.password = await bcrypt.hash(password, 10);
+    user.password_changed_at = new Date();
     await user.save();
 
     codeStore.delete(key);
@@ -515,6 +516,7 @@ router.post('/change-password/reset', authMiddleware, [
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
+    user.password_changed_at = new Date();
     await user.save();
 
     codeStore.delete(key);

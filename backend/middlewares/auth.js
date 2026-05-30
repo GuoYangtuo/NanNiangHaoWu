@@ -3,8 +3,9 @@
 const jwt = require('jsonwebtoken');
 const { unauthorized } = require('../utils/response');
 const logger = require('../utils/logger');
+const User = require('../models/User');
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -21,6 +22,20 @@ const authMiddleware = (req, res, next) => {
       email: decoded.email,
       role: decoded.role
     };
+
+    // 检查 token 是否在密码修改之前签发，若是则需重新登录
+    if (decoded.iat && decoded.id) {
+      const user = await User.findByPk(decoded.id, { attributes: ['password_changed_at'] });
+      if (user && user.password_changed_at) {
+        const changedAtMs = new Date(user.password_changed_at).getTime();
+        // JWT iat 是秒，password_changed_at 是毫秒
+        if (decoded.iat * 1000 < changedAtMs) {
+          logger.warn('Auth', `Token 在密码修改前签发，已失效: userId=${decoded.id}`);
+          return unauthorized(res, '密码已变更，请重新登录');
+        }
+      }
+    }
+
     next();
   } catch (err) {
     logger.warn('Auth', 'JWT 验证失败', { error: err.message });

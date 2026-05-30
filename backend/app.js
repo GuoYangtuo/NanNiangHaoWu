@@ -179,6 +179,21 @@ const initializeDatabase = async () => {
       logger.warn('Database', `member_expires_at 列检查/创建失败: ${err.message}，将跳过`);
     }
 
+    // 确保 users 表存在 password_changed_at 列（密码修改时间，用于使旧token失效）
+    try {
+      const [results3] = await sequelize.query(
+        "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'password_changed_at' LIMIT 1"
+      );
+      if (!results3 || results3.length === 0) {
+        await sequelize.query(
+          "ALTER TABLE `users` ADD COLUMN `password_changed_at` DATETIME NULL COMMENT '密码修改时间，用于使旧token失效' AFTER `member_expires_at`"
+        );
+        logger.info('Database', 'users 表 password_changed_at 列已添加');
+      }
+    } catch (err) {
+      logger.warn('Database', `password_changed_at 列检查/创建失败: ${err.message}，将跳过`);
+    }
+
     // 确保 products 表存在 average_rating 和 review_count 列（旧数据库升级用）
     try {
       const [results2] = await sequelize.query(

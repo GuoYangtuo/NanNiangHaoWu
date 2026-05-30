@@ -55,6 +55,11 @@ const User = sequelize.define('User', {
   status: {
     type: DataTypes.ENUM('active', 'banned'),
     defaultValue: 'active'
+  },
+  password_changed_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    comment: '密码修改时间，用于使旧token失效'
   }
 }, {
   tableName: 'users',
