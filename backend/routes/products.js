@@ -72,8 +72,17 @@ const createProductRules = [
 // GET /api/products - 获取已审核通过的商品列表
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { category_id, page = 1, limit = 20 } = req.query;
+    const { category_id, page = 1, limit = 20, sort = 'time', order = 'desc', review_count_min, review_count_max } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
+    const sortOrder = order === 'asc' ? 'ASC' : 'DESC';
+
+    const sortMap = {
+      time:        [['created_at', sortOrder]],
+      review_count: [['review_count', sortOrder]],
+      hot:         [['review_count', sortOrder], ['average_rating', sortOrder]],
+      rating:      [['average_rating', sortOrder], ['review_count', sortOrder]],
+    };
+    const orderClause = sortMap[sort] || sortMap.time;
 
     const whereClause = { status: 'approved' };
     if (category_id && isValidCategory(category_id)) {
@@ -85,6 +94,13 @@ router.get('/', optionalAuth, async (req, res) => {
       }
     }
 
+    if (review_count_min !== undefined && review_count_min !== '') {
+      whereClause.review_count = { ...whereClause.review_count, [require('sequelize').Op.gte]: parseInt(review_count_min) };
+    }
+    if (review_count_max !== undefined && review_count_max !== '') {
+      whereClause.review_count = { ...whereClause.review_count, [require('sequelize').Op.lte]: parseInt(review_count_max) };
+    }
+
     const { count, rows: products } = await Product.findAndCountAll({
       where: whereClause,
       include: [
@@ -94,7 +110,7 @@ router.get('/', optionalAuth, async (req, res) => {
           attributes: ['id', 'username']
         }
       ],
-      order: [['created_at', 'DESC']],
+      order: orderClause,
       limit: parseInt(limit),
       offset
     });

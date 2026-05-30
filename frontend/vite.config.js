@@ -11,7 +11,7 @@ export default defineConfig({
         changeOrigin: true
       },
       '/uploads': {
-        target: 'http://localhost:3002',
+        target: 'http://nannianghaowu.top/uploads',
         changeOrigin: true
       }
     }

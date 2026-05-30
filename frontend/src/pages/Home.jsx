@@ -56,6 +56,11 @@ const Home = () => {
   const [page, setPage] = useState(init.page ?? 1);
   const [hasMore, setHasMore] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState(init.searchKeyword ?? '');
+  const [sort, setSort] = useState(init.sort ?? 'time');
+  const [order, setOrder] = useState(init.order ?? 'desc');
+  const [reviewCountMin, setReviewCountMin] = useState(init.reviewCountMin ?? '');
+  const [reviewCountMax, setReviewCountMax] = useState(init.reviewCountMax ?? '');
+  const [filterOpen, setFilterOpen] = useState(false);
   const { categories, lockedIds } = useCategories();
   const isSubscribed = isActiveMember;
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -72,11 +77,15 @@ const Home = () => {
         products,
         page,
         searchKeyword,
+        sort,
+        order,
+        reviewCountMin,
+        reviewCountMax,
       }));
     } catch {
       // Silently ignore storage errors (quota exceeded, etc.)
     }
-  }, [selectedCategory, products, page, searchKeyword]);
+  }, [selectedCategory, products, page, searchKeyword, sort, order, reviewCountMin, reviewCountMax]);
 
   const selectedFolder = selectedCategory ? findFolderById(categories, selectedCategory) : null;
   const selectedFolderContent = selectedFolder?.content || null;
@@ -90,13 +99,21 @@ const Home = () => {
     try {
       const params = {
         page: pageNum,
-        limit: 12
+        limit: 12,
+        sort,
+        order,
       };
       if (categoryId) {
         params.category_id = categoryId;
       }
       if (searchKeyword.trim()) {
         params.keyword = searchKeyword.trim();
+      }
+      if (reviewCountMin !== '') {
+        params.review_count_min = reviewCountMin;
+      }
+      if (reviewCountMax !== '') {
+        params.review_count_max = reviewCountMax;
       }
 
       const res = await getProducts(params);
@@ -113,12 +130,12 @@ const Home = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchKeyword]);
+  }, [searchKeyword, sort, order, reviewCountMin, reviewCountMax]);
 
   useEffect(() => {
     setPage(1);
     fetchProducts(isLeafSelected ? selectedCategory : null, 1, false);
-  }, [selectedCategory, searchKeyword, fetchProducts, isLeafSelected]);
+  }, [selectedCategory, searchKeyword, sort, order, reviewCountMin, reviewCountMax, fetchProducts, isLeafSelected]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
@@ -213,12 +230,115 @@ const Home = () => {
         {/* 页面标题 — markdown 模式下隐藏 */}
         {!selectedFolderContent && (
           <div className="mb-3 md:mb-4">
-            <h1 className="text-2xl font-bold text-text1">
-              {selectedName || '好物推荐'}
-            </h1>
-            <p className="text-text2 mt-1 text-sm">
-              {subtitle}
-            </p>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div>
+                <h1 className="text-2xl font-bold text-text1">
+                  {selectedName || '好物推荐'}
+                </h1>
+                <p className="text-text2 mt-1 text-sm">
+                  {subtitle}
+                </p>
+              </div>
+
+              {/* 排序与筛选 */}
+              <div className="flex items-center gap-2 relative">
+                {/* 排序 Tab */}
+                <div className="flex bg-warm-bg rounded-lg p-0.5 text-sm">
+                  {[
+                    { value: 'time', label: '时间' },
+                    { value: 'review_count', label: '评论数' },
+                    { value: 'hot', label: '热度' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setSort(opt.value)}
+                      className={`px-3 py-1 rounded-md transition-colors ${
+                        sort === opt.value
+                          ? 'bg-white text-text1 font-medium shadow-sm'
+                          : 'text-text2 hover:text-text1'
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 升/降序切换 */}
+                <button
+                  onClick={() => setOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="p-2 rounded-lg bg-warm-bg hover:bg-warm-border/50 text-text2 hover:text-text1 transition-colors"
+                  title={order === 'asc' ? '升序' : '降序'}
+                >
+                  {order === 'asc' ? (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+                    </svg>
+                  )}
+                </button>
+
+                {/* 筛选按钮 */}
+                <button
+                  onClick={() => setFilterOpen(prev => !prev)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    filterOpen || reviewCountMin || reviewCountMax
+                      ? 'bg-primary text-white'
+                      : 'bg-warm-bg text-text2 hover:text-text1 hover:bg-warm-border/50'
+                  }`}
+                  title="筛选"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                </button>
+
+                {/* 筛选下拉面板 */}
+                {filterOpen && (
+                  <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg p-4 w-64">
+                    <p className="text-xs font-semibold text-text2 uppercase tracking-wider mb-3">按评论数筛选</p>
+                    <div className="flex items-center gap-2 mb-3">
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="最小值"
+                        value={reviewCountMin}
+                        onChange={e => setReviewCountMin(e.target.value)}
+                        className="flex-1 px-3 py-2 text-sm border border-warm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                      <span className="text-text2 text-sm">~</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="最大值"
+                        value={reviewCountMax}
+                        onChange={e => setReviewCountMax(e.target.value)}
+                        className="flex-1 px-3 py-2 text-sm border border-warm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setReviewCountMin('');
+                          setReviewCountMax('');
+                        }}
+                        className="px-3 py-1.5 text-sm text-text2 hover:text-text1 border border-warm-border rounded-lg hover:bg-warm-bg transition-colors"
+                      >
+                        重置
+                      </button>
+                      <button
+                        onClick={() => setFilterOpen(false)}
+                        className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+                      >
+                        确定
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
