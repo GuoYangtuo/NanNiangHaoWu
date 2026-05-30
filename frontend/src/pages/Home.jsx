@@ -38,6 +38,87 @@ const findLeafById = (nodes, id) => {
 
 const STORAGE_KEY = 'home_state_v1';
 
+// 双滑条筛选面板
+const RangeFilterPanel = ({ minValue, maxValue, onChange }) => {
+  const [localMin, setLocalMin] = useState(minValue);
+  const [localMax, setLocalMax] = useState(maxValue);
+  const MAX = 50;
+
+  // 打开面板时同步本地状态
+  useEffect(() => {
+    setLocalMin(minValue);
+    setLocalMax(maxValue);
+  }, [minValue, maxValue]);
+
+  const displayMin = localMin || 0;
+  const displayMax = localMax || '∞';
+
+  const handleMaxChange = (rawVal) => {
+    const val = Math.min(parseInt(rawVal) || 0, MAX);
+    setLocalMax(String(val));
+  };
+
+  const handleMinChange = (rawVal) => {
+    const val = Math.min(parseInt(rawVal) || 0, MAX);
+    setLocalMin(String(val));
+  };
+
+  const handleCommit = () => {
+    onChange(localMin, localMax);
+  };
+
+  return (
+    <>
+      <div className="flex justify-between items-center mb-1">
+        <p className="text-xs font-semibold text-text2 uppercase tracking-wider">按评论数筛选</p>
+        <span className="text-xs text-text2">{displayMin} ~ {displayMax}</span>
+      </div>
+      <div className="relative h-6 mt-2 mb-2">
+        <div
+          className="absolute top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-[#E8DDD8]"
+          style={{ left: 0, right: 0 }}
+        >
+          <div
+            className="absolute h-full rounded-full bg-[#E879A9]"
+            style={{
+              left: `${((parseInt(localMin) || 0) / MAX) * 100}%`,
+              right: `${((MAX - (parseInt(localMax) || MAX)) / MAX) * 100}%`,
+            }}
+          />
+        </div>
+        <input
+          type="range"
+          min="0"
+          max={MAX}
+          value={localMin}
+          onChange={e => {
+            const val = parseInt(e.target.value);
+            const maxVal = parseInt(localMax) || MAX;
+            setLocalMin(String(Math.min(val, maxVal)));
+          }}
+          onMouseUp={handleCommit}
+          onTouchEnd={handleCommit}
+          className="range-input"
+        />
+        <input
+          type="range"
+          min="0"
+          max={MAX}
+          value={localMax || MAX}
+          onChange={e => {
+            const val = parseInt(e.target.value);
+            const minVal = parseInt(localMin) || 0;
+            setLocalMax(String(Math.max(val, minVal)));
+          }}
+          onMouseUp={handleCommit}
+          onTouchEnd={handleCommit}
+          className="range-input"
+        />
+      </div>
+    </>
+  );
+};
+
 const loadState = () => {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
@@ -298,27 +379,15 @@ const Home = () => {
                 {/* 筛选下拉面板 */}
                 {filterOpen && (
                   <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg p-4 w-64">
-                    <p className="text-xs font-semibold text-text2 uppercase tracking-wider mb-3">按评论数筛选</p>
-                    <div className="flex items-center gap-2 mb-3">
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="最小值"
-                        value={reviewCountMin}
-                        onChange={e => setReviewCountMin(e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm border border-warm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      />
-                      <span className="text-text2 text-sm">~</span>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="最大值"
-                        value={reviewCountMax}
-                        onChange={e => setReviewCountMax(e.target.value)}
-                        className="flex-1 px-3 py-2 text-sm border border-warm-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
+                    <RangeFilterPanel
+                      minValue={reviewCountMin}
+                      maxValue={reviewCountMax}
+                      onChange={(min, max) => {
+                        setReviewCountMin(min);
+                        setReviewCountMax(max);
+                      }}
+                    />
+                    <div className="flex justify-end mt-1">
                       <button
                         onClick={() => {
                           setReviewCountMin('');
@@ -327,12 +396,6 @@ const Home = () => {
                         className="px-3 py-1.5 text-sm text-text2 hover:text-text1 border border-warm-border rounded-lg hover:bg-warm-bg transition-colors"
                       >
                         重置
-                      </button>
-                      <button
-                        onClick={() => setFilterOpen(false)}
-                        className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-                      >
-                        确定
                       </button>
                     </div>
                   </div>
