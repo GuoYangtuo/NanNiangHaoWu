@@ -224,15 +224,16 @@ const MobileCategoryDropdown = ({ selectedId, onSelect }) => {
           onClick={() => setOpen((v) => !v)}
           className="flex-1 min-w-0 px-3 py-2 bg-white border border-warm-border rounded-lg text-sm text-left flex items-center justify-between hover:border-primary/40 transition-colors"
         >
-          <div className="flex flex-col min-w-0 flex-1 mr-2">
-            <span className={`${selectedId ? 'text-text1 font-medium' : 'text-text2/60'} truncate text-sm`}>
-              {selectedNode ? selectedNode.name : '全部好物'}
-            </span>
+          <div className="flex items-center min-w-0 flex-1 mr-2">
             {breadcrumbPath.length > 0 && (
-              <span className="text-xs text-text2/60 truncate mt-0.5">
+              <span className="text-xs text-text2/60 truncate flex-shrink-0">
                 {breadcrumbPath.join(' / ')}
+                <span className="mx-1 text-text2/40">/</span>
               </span>
             )}
+            <span className={`${selectedId ? 'text-text1 font-medium text-sm' : 'text-text2/60 text-sm'} truncate`}>
+              {selectedNode ? selectedNode.name : '全部好物'}
+            </span>
           </div>
           <svg
             className={`w-4 h-4 text-text2 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}

@@ -204,15 +204,15 @@ const Home = () => {
       </aside>
 
       {/* 右侧主内容 */}
-      <div className="flex-1 px-2 py-6 sm:px-4 md:px-8">
+      <div className="flex-1 px-2 py-3 sm:px-4 md:px-8 md:py-6">
         {/* 移动端分类选择 */}
-        <div className="md:hidden mb-4">
+        <div className="md:hidden mb-2">
           <MobileCategoryDropdown selectedId={selectedCategory} onSelect={handleCategorySelect} />
         </div>
 
         {/* 页面标题 — markdown 模式下隐藏 */}
         {!selectedFolderContent && (
-          <div className="mb-6">
+          <div className="mb-3 md:mb-4">
             <h1 className="text-2xl font-bold text-text1">
               {selectedName || '好物推荐'}
             </h1>
