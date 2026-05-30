@@ -483,10 +483,10 @@ const Home = () => {
 
                 {/* 浮层面板 */}
                 {sortFilterExpanded && (
-                  <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg p-4 w-[min(90vw,360px)]">
+                  <div className="absolute right-0 top-full mt-2 z-20 bg-white rounded-xl border border-warm-border shadow-lg py-4 px-5 w-[min(90vw,360px)]">
                     {/* 排序选项 */}
                     <div className="mb-3">
-                      <p className="text-xs text-text2 mb-1.5">排序方式</p>
+                      <p className="text-xs text-text2 mb-1.5 font-semibold">排序方式</p>
                       <div className="flex gap-1.5">
                         {[
                           { value: 'time', label: '时间' },
@@ -510,7 +510,7 @@ const Home = () => {
 
                     {/* 升/降序 */}
                     <div className="mb-3">
-                      <p className="text-xs text-text2 mb-1.5">排序顺序</p>
+                      <p className="text-xs text-text2 mb-1.5 font-semibold">排序顺序</p>
                       <div className="flex gap-1.5">
                         {[
                           { value: 'asc', label: '从高到低' },
