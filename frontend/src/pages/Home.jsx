@@ -143,6 +143,7 @@ const RangeFilterPanel = ({ minValue, maxValue, onChange }) => {
       <div
         ref={trackRef}
         className="relative h-8 mt-1 mb-0 cursor-pointer select-none"
+        style={{ touchAction: 'none' }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}

@@ -5,13 +5,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    host: '0.0.0.0',
     proxy: {
       '/api': {
         target: 'http://localhost:3002',
         changeOrigin: true
       },
       '/uploads': {
-        target: 'http://nannianghaowu.top/uploads',
+        target: 'https://nannianghaowu.top',
         changeOrigin: true
       }
     }
