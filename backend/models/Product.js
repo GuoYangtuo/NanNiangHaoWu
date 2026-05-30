@@ -36,7 +36,11 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING(500),
     allowNull: true,
     validate: {
-      isUrl: true,
+      isUrl(value) {
+        if (value && value.length > 0 && !/^https?:\/\/.+/i.test(value)) {
+          throw new Error('购买链接必须是有效的 URL（以 http:// 或 https:// 开头）');
+        }
+      },
       len: [0, 500]
     }
   },
