@@ -8,6 +8,19 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'nanmeihao@' + (process.env.RESEND_
 const SITE_NAME = '小南娘好物推荐';
 const BASE_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+// Rate limiter: ensure at least 500ms between sends (max 2 req/s, Resend free tier limit)
+let lastSentTime = 0;
+const MIN_INTERVAL_MS = 500;
+
+const waitForRateLimit = async () => {
+  const now = Date.now();
+  const elapsed = now - lastSentTime;
+  if (elapsed < MIN_INTERVAL_MS) {
+    await new Promise(resolve => setTimeout(resolve, MIN_INTERVAL_MS - elapsed));
+  }
+  lastSentTime = Date.now();
+};
+
 const generateVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -122,6 +135,7 @@ const resetPasswordEmailHtml = (code, username, isReset = true) => `
 const sendVerificationEmail = async (to, username) => {
   const code = generateVerificationCode();
   try {
+    await waitForRateLimit();
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
@@ -143,6 +157,7 @@ const sendVerificationEmail = async (to, username) => {
 const sendResetPasswordEmail = async (to, username) => {
   const code = generateVerificationCode();
   try {
+    await waitForRateLimit();
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
@@ -164,6 +179,7 @@ const sendResetPasswordEmail = async (to, username) => {
 const sendChangePasswordEmail = async (to, username) => {
   const code = generateVerificationCode();
   try {
+    await waitForRateLimit();
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,

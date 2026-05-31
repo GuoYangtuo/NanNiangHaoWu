@@ -79,7 +79,7 @@ router.get('/', optionalAuth, async (req, res) => {
     const sortMap = {
       time:        [['created_at', sortOrder]],
       review_count: [['review_count', sortOrder]],
-      rating:      [['average_rating', sortOrder], ['review_count', sortOrder]],
+      rating:      [['average_rating', sortOrder], ['created_at', sortOrder]],
     };
     const orderClause = sortMap[sort] || sortMap.time;
 
